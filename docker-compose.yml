@@ -14,7 +14,7 @@ services:
 
   # client_mobile:
     # build:
-    #   context: ./mobile
+    #   context: ./frontend/mobile
     #   dockerfile: Dockerfile
     # container_name: client_mobile
     # volumes:
