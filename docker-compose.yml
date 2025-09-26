@@ -1,0 +1,39 @@
+
+services:
+  server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: server
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - shared_volume:/shared
+
+  # client_mobile:
+    # build:
+    #   context: ./mobile
+    #   dockerfile: Dockerfile
+    # container_name: client_mobile
+    # volumes:
+    #   - shared_volume:/shared
+
+  client_web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: client_web
+    ports:
+      - "8081:8081"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - server
+      # - client_mobile
+    volumes:
+      - shared_volume:/shared
+
+volumes:
+  shared_volume:
