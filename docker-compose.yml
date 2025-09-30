@@ -1,5 +1,17 @@
-
 services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   server:
     build:
       context: ./backend
@@ -13,12 +25,12 @@ services:
       - shared_volume:/shared
 
   # client_mobile:
-    # build:
-    #   context: ./frontend/mobile
-    #   dockerfile: Dockerfile
-    # container_name: client_mobile
-    # volumes:
-    #   - shared_volume:/shared
+  #   build:
+  #     context: ./frontend/mobile
+  #     dockerfile: Dockerfile
+  #   container_name: client_mobile
+  #   volumes:
+  #     - shared_volume:/shared
 
   client_web:
     build:
@@ -37,3 +49,4 @@ services:
 
 volumes:
   shared_volume:
+  postgres_data:
