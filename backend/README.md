@@ -27,9 +27,47 @@
 
 ## Project setup
 
+### 🚀 Development Setup (Recommended)
+
+For development with hot reload:
+
+#### 1. Install dependencies
 ```bash
 $ npm install
 ```
+
+#### 2. Environment setup
+Copy the environment file and configure your database:
+```bash
+$ cp ../.env.example ../.env
+```
+
+#### 3. Start only the database
+```bash
+$ cd .. && docker-compose up -d postgres
+```
+
+#### 4. Run database migrations
+```bash
+$ npm run prisma:migrate
+$ npm run prisma:generate
+```
+
+#### 5. Start the backend in development mode
+```bash
+$ npm run start:dev
+```
+
+### 🐳 Production Testing
+
+To test the full stack in production mode:
+```bash
+$ cd .. && docker-compose up
+```
+This will start:
+- PostgreSQL (port 5433)
+- Backend API (port 8080) 
+- Frontend Web (port 8081)
 
 ## Compile and run the project
 

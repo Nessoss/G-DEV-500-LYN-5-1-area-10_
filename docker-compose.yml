@@ -5,10 +5,10 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -18,11 +18,15 @@ services:
       dockerfile: Dockerfile
     container_name: server
     ports:
-      - "8080:8080"
+      - "8080:3000"
     environment:
-      NODE_ENV: production mydb
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - shared_volume:/shared
+    depends_on:
+      - postgres
 
   # client_mobile:
   #   build:
@@ -38,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: client_web
     ports:
-      - "8081:8081"
+      - "8081:3000"
     environment:
       NODE_ENV: production
     depends_on:
