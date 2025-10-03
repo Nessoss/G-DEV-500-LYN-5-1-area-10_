@@ -42,20 +42,9 @@ Copy the environment file and configure your database:
 $ cp ../.env.example ../.env
 ```
 
-#### 3. Start only the database
+#### 3. Build the docker
 ```bash
-$ cd .. && docker-compose up -d postgres
-```
-
-#### 4. Run database migrations
-```bash
-$ npm run prisma:migrate
-$ npm run prisma:generate
-```
-
-#### 5. Start the backend in development mode
-```bash
-$ npm run start:dev
+$ cd .. && docker-compose up --build
 ```
 
 ### 🐳 Production Testing
