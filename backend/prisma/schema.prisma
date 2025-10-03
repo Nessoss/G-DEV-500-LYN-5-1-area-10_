@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -20,7 +21,7 @@ enum AreaLogStatus {
 }
 
 model User {
-  id              String            @id @default(cuid()) @db.Text
+  id              Int            @id @default(autoincrement())
   email           String            @unique @db.Text
   passwordHash    String            @db.Text
   createdAt       DateTime          @default(now()) @db.Timestamp(6)
@@ -32,8 +33,8 @@ model User {
 }
 
 model ProviderAccount {
-  id             String   @id @default(cuid()) @db.Text
-  userId         String   @db.Text
+  id             Int   @id @default(autoincrement())
+  userId         Int
   provider       String   @db.Text
   providerUserId String   @db.Text
   accessToken    String   @db.Text
@@ -49,7 +50,7 @@ model ProviderAccount {
 }
 
 model Service {
-  id        String   @id @default(cuid()) @db.Text
+  id        Int   @id @default(autoincrement())
   slug      String   @unique @db.Text
   name      String   @db.Text
   enabled   Boolean  @default(true)
@@ -61,8 +62,8 @@ model Service {
 }
 
 model Action {
-  id           String   @id @default(cuid()) @db.Text
-  serviceId    String   @db.Text
+  id           Int   @id @default(autoincrement())
+  serviceId    Int
   key          String   @db.Text
   description  String?  @db.Text
   configSchema Json?
@@ -76,8 +77,8 @@ model Action {
 }
 
 model Reaction {
-  id           String   @id @default(cuid()) @db.Text
-  serviceId    String   @db.Text
+  id           Int   @id @default(autoincrement())
+  serviceId    Int
   key          String   @db.Text
   description  String?  @db.Text
   configSchema Json?
@@ -91,10 +92,10 @@ model Reaction {
 }
 
 model Area {
-  id               String   @id @default(cuid()) @db.Text
-  userId           String   @db.Text
-  actionId         String   @db.Text
-  reactionId       String   @db.Text
+  id               Int   @id @default(autoincrement())
+  userId           Int
+  actionId         Int
+  reactionId       Int
   name             String   @db.Text
   enabled          Boolean  @default(true)
   actionConfig     Json?
@@ -113,8 +114,8 @@ model Area {
 }
 
 model AreaLog {
-  id          String        @id @default(cuid()) @db.Text
-  areaId      String        @db.Text
+  id          Int        @id @default(autoincrement())
+  areaId      Int
   status      AreaLogStatus
   triggeredAt DateTime @default(now()) @db.Timestamp(6)
   payload     Json?
@@ -126,8 +127,8 @@ model AreaLog {
 }
 
 model Token {
-  id        String    @id @default(cuid()) @db.Text
-  userId    String    @db.Text
+  id        Int    @id @default(autoincrement())
+  userId    Int
   type      TokenType
   hashed    String    @db.Text
   expiresAt DateTime? @db.Timestamp(6)
@@ -140,8 +141,8 @@ model Token {
 }
 
 model WebhookEvent {
-  id         String   @id @default(cuid()) @db.Text
-  serviceId  String   @db.Text
+  id         Int   @id @default(autoincrement())
+  serviceId  Int
   externalId String   @db.Text
   receivedAt DateTime @default(now()) @db.Timestamp(6)
   payload    Json?
