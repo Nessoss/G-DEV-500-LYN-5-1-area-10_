@@ -11,13 +11,9 @@ export default function LandingPage() {
 
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
           <div className="text-center">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-              <Sparkles className="h-4 w-4" />
-              Nouvelle plateforme
-            </div>
 
             <h1 className="text-5xl font-bold tracking-tight text-foreground sm:text-7xl">
-              Bienvenue sur{" "}
+              Bienvenue sur 
               <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                 AREA
               </span>
