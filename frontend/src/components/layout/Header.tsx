@@ -15,7 +15,6 @@ export function Header() {
             height={60}
             className="h-14 w-auto"
           />
-          <span className="text-xl font-bold text-foreground">Area</span>
         </Link>
 
         {/* Auth Buttons */}
