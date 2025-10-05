@@ -61,9 +61,23 @@ export default function LandingPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground/80 mb-4">
                   Créez des automatisations puissantes sans écrire une seule ligne de code.
                 </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Interface intuitive et facile à prendre en main</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Déclenchement instantané de vos actions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Connectez plus de 100 services populaires</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
 
@@ -78,9 +92,23 @@ export default function LandingPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground/80 mb-4">
                   Chiffrement de bout en bout et conformité aux standards de sécurité.
                 </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Authentification OAuth sécurisée</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Hébergement conforme RGPD</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Surveillance 24/7 et backups automatiques</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
 
@@ -95,9 +123,23 @@ export default function LandingPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground/80 mb-4">
                   Partagez vos automatisations et collaborez avec votre équipe.
                 </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Espaces de travail partagés</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Gestion des rôles et permissions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Templates réutilisables par toute l'équipe</span>
+                  </li>
+                </ul>
               </CardContent>
             </Card>
           </div>
