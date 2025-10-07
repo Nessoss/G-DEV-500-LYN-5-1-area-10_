@@ -9,10 +9,10 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/logo.png"
+            src="/smallLogo.png"
             alt="Logo"
-            width={60}
-            height={60}
+            width={50}
+            height={50}
             className="h-14 w-auto"
           />
         </Link>
