@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   return (
@@ -35,8 +36,9 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Theme Toggle & Auth Buttons */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" asChild>
             <Link href="/login">Login</Link>
           </Button>

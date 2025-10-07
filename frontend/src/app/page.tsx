@@ -21,7 +21,7 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mt-6 text-lg leading-8 text-muted max-w-2xl mx-auto">
+            <p className="mt-6 text-lg leading-8 max-w-2xl mx-auto">
               Connectez vos applications préférées et automatisez vos tâches quotidiennes.
               Simple, rapide et puissant.
             </p>
@@ -48,7 +48,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Pourquoi choisir AREA ?
             </h2>
-            <p className="mt-4 text-lg text-muted">
+            <p className="mt-4 text-lg">
               Une solution complète pour automatiser votre quotidien
             </p>
           </div>
@@ -157,7 +157,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Prêt à commencer ?
             </h2>
-            <p className="mt-6 text-lg leading-8 text-muted">
+            <p className="mt-6 text-lg leading-8">
               Rejoignez des milliers d&apos;utilisateurs qui automatisent leur quotidien
             </p>
             <div className="mt-10 flex items-center justify-center gap-6">

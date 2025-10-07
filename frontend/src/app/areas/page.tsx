@@ -147,7 +147,7 @@ export default function AreasPage() {
               {" "}Areas
             </span>
           </h1>
-          <p className="text-lg text-muted max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Gérez vos automatisations et créez de nouvelles connections entre vos applications
           </p>
         </div>
@@ -194,7 +194,7 @@ export default function AreasPage() {
               {areas.map((area) => (
                 <Card
                   key={area.id}
-                  className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg w-full"
+                  className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg w-full bg-card/50 backdrop-blur"
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
@@ -224,7 +224,7 @@ export default function AreasPage() {
                   <CardContent className="pt-0 pb-6">
                     <div className="space-y-6">
                       {/* Action */}
-                      <div className="rounded-xl border p-4 bg-primary/5">
+                      <div className="rounded-xl border-2 border-primary/20 p-4 bg-primary/10 dark:bg-primary/5">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-sm font-semibold text-primary uppercase tracking-wide">
                             🔔 Déclencheur
@@ -232,25 +232,25 @@ export default function AreasPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-foreground text-lg">{area.action.service}</p>
-                          <p className="text-muted-foreground mt-1">{area.action.trigger}</p>
+                          <p className="text-foreground/70 mt-1">{area.action.trigger}</p>
                         </div>
                       </div>
 
                       {/* Flèche */}
                       <div className="flex justify-center">
-                        <div className="text-2xl text-muted-foreground">↓</div>
+                        <div className="text-2xl text-foreground/60 font-bold">↓</div>
                       </div>
 
                       {/* Reaction */}
-                      <div className="rounded-xl border p-4 bg-secondary/5">
+                      <div className="rounded-xl border-2 border-secondary/20 p-4 bg-secondary/10 dark:bg-secondary/5">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-sm font-semibold text-secondary uppercase tracking-wide">
+                          <span className="text-sm font-semibold text-secondary-foreground uppercase tracking-wide">
                             ⚡ Action
                           </span>
                         </div>
                         <div>
                           <p className="font-semibold text-foreground text-lg">{area.reaction.service}</p>
-                          <p className="text-muted-foreground mt-1">{area.reaction.action}</p>
+                          <p className="text-foreground/70 mt-1">{area.reaction.action}</p>
                         </div>
                       </div>
                     </div>
