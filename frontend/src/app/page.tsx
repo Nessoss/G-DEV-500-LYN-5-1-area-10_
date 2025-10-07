@@ -1,6 +1,7 @@
 import { ArrowRight, Zap, Shield, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -26,10 +27,12 @@ export default function Home() {
             </p>
 
             <div className="mt-10 flex items-center justify-center gap-6">
-              <Button size="lg" className="gap-2">
-                Commencer
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <Link href="/areas">
+                <Button size="lg" className="gap-2">
+                  Commencer
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
               <Button size="lg" variant="outline">
                 En savoir plus
               </Button>
@@ -138,7 +141,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-accent mt-0.5 font-bold">✓</span>
-                    <span>Templates réutilisables par toute l'équipe</span>
+                    <span>Templates réutilisables par toute l&apos;équipe</span>
                   </li>
                 </ul>
               </CardContent>
@@ -155,7 +158,7 @@ export default function Home() {
               Prêt à commencer ?
             </h2>
             <p className="mt-6 text-lg leading-8 text-muted">
-              Rejoignez des milliers d'utilisateurs qui automatisent leur quotidien
+              Rejoignez des milliers d&apos;utilisateurs qui automatisent leur quotidien
             </p>
             <div className="mt-10 flex items-center justify-center gap-6">
               <Button size="lg" className="gap-2">
