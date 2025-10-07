@@ -194,13 +194,17 @@ export default function AreasPage() {
               {areas.map((area) => (
                 <Card
                   key={area.id}
-                  className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg w-full bg-card/50 backdrop-blur"
+                  className={`border-2 hover-lift w-full bg-card/50 backdrop-blur ${
+                    area.isActive 
+                      ? 'hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10' 
+                      : 'hover:border-orange-400/70 hover:bg-orange-50/30 dark:hover:bg-orange-900/20'
+                  }`}
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                          <Settings className="h-6 w-6 text-primary" />
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition-all duration-300 flex-shrink-0">
+                          <Settings className="h-6 w-6 text-primary hover:rotate-12 transition-transform duration-300" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-xl font-semibold truncate">{area.name}</CardTitle>

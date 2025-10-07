@@ -66,6 +66,8 @@
   --ring: #4DA8DA;
   --success: #22C55E;
   --warning: #F97316;
+  --orange: #FB923C;
+  --orange-foreground: #FFFFFF;
   --chart-1: #4DA8DA;
   --chart-2: #80D8C3;
   --chart-3: #FFD66B;
@@ -103,6 +105,8 @@
   --ring: #4DA8DA;
   --success: #22C55E;
   --warning: #F97316;
+  --orange: #FB923C;
+  --orange-foreground: #FFFFFF;
   --chart-1: #4DA8DA;
   --chart-2: #80D8C3;
   --chart-3: #FFD66B;
@@ -124,5 +128,42 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounce-subtle 1s infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+  
+  .hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 }

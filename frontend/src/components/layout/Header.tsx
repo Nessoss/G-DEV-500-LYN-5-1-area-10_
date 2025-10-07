@@ -15,7 +15,7 @@ export function Header() {
             alt="Logo"
             width={50}
             height={50}
-            className="h-14 w-auto"
+            className="h-14 w-auto hover:scale-110 transition-transform duration-300"
           />
         </Link>
 
@@ -23,13 +23,13 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-6 pl-25">
           <Link 
             href="/" 
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
           >
             Accueil
           </Link>
           <Link 
             href="/areas" 
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform flex items-center gap-1"
           >
             <Settings className="h-4 w-4" />
             Mes Areas
