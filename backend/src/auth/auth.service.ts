@@ -4,77 +4,230 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import type { User } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'node:crypto';
+import argon2, { type Options as Argon2Options, argon2id } from 'argon2';
+import type { Response } from 'express';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
+import { AuthConfigService } from './auth.config';
+import type { JwtPayload } from './interfaces/jwt-payload.interface';
+
+interface GeneratedTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+  refreshExpiresInSeconds: number;
+  payload: JwtPayload;
+}
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly saltRounds = 12;
+  private readonly argon2Options: Argon2Options & { type: typeof argon2id } = {
+    type: argon2id,
+    memoryCost: 64 * 1024,
+    timeCost: 3,
+    parallelism: 1,
+  };
+  private fallbackPasswordHashPromise: Promise<string> | null = null;
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly authConfig: AuthConfigService,
+  ) {}
 
-  /**
-   * Register a new user
-   * @param registerDto - User registration data
-   * @returns Created user (without password hash)
-   */
   async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
-    const { email, password } = registerDto;
+    const email = this.normalizeEmail(registerDto.email);
+    const password = registerDto.password;
 
-    this.logger.log(`Attempting to register user with email: ${email}`);
+    this.logger.log(`Attempting to register user`, { email });
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
-      this.logger.warn(`Registration failed: User with email ${email} already exists`);
+      this.logger.warn(`Registration failed: duplicate email`, { email });
       throw new ConflictException('User with this email already exists');
     }
 
     try {
-      const passwordHash = await this.hashPassword(password);
+      const passwordHash = await argon2.hash(password, this.argon2Options);
       const user = await this.usersService.create({
         email,
         passwordHash,
       });
 
-      this.logger.log(`User successfully registered with ID: ${user.id}`);
+      this.logger.log(`User successfully registered`, { userId: user.id });
 
-      const { passwordHash: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      return this.sanitizeUser(user);
     } catch (error) {
-      this.logger.error(`Registration failed for email ${email}:`, error);
+      this.logger.error(`Registration failed`, { email, error });
       throw new InternalServerErrorException('Failed to register user');
     }
   }
 
-  /**
-   * Hash a password using bcrypt
-   * @param password - Plain text password
-   * @returns Hashed password
-   */
-  private async hashPassword(password: string): Promise<string> {
+  async validateUser(email: string, password: string): Promise<User | null> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const user = await this.usersService.findByEmail(normalizedEmail);
+    const isPasswordValid = await this.safeVerifyPassword(
+      user?.passwordHash ?? null,
+      password,
+    );
+
+    if (!user || !isPasswordValid) {
+      this.logger.warn(`Authentication failed`, { email: normalizedEmail });
+      return null;
+    }
+
+    if (this.isInactive(user)) {
+      this.logger.warn(`Authentication blocked: inactive account`, {
+        email: normalizedEmail,
+      });
+      return null;
+    }
+
+    if (this.isBanned(user)) {
+      this.logger.warn(`Authentication blocked: banned account`, {
+        email: normalizedEmail,
+      });
+      return null;
+    }
+
+    return user;
+  }
+
+  async generateTokens(user: User): Promise<GeneratedTokens> {
+    const jwtId = randomUUID();
+    const roles = this.resolveRoles(user);
+    const subject = String(user.id);
+
+    const payload: JwtPayload = {
+      sub: subject,
+      email: user.email,
+      roles,
+      jti: jwtId,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        algorithm: 'RS256',
+        privateKey: this.authConfig.accessPrivateKey,
+        expiresIn: this.authConfig.accessTokenTtlSeconds,
+        issuer: this.authConfig.jwtIssuer,
+        audience: this.authConfig.jwtAudience,
+      }),
+      this.jwtService.signAsync(payload, {
+        algorithm: 'RS256',
+        privateKey: this.authConfig.refreshPrivateKey,
+        expiresIn: this.authConfig.refreshTokenTtlSeconds,
+        issuer: this.authConfig.jwtIssuer,
+        audience: this.authConfig.jwtAudience,
+      }),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresInSeconds: this.authConfig.accessTokenTtlSeconds,
+      refreshExpiresInSeconds: this.authConfig.refreshTokenTtlSeconds,
+      payload,
+    };
+  }
+
+  async revokeRefreshTokens(_userId: number, _jti: string): Promise<void> {
+    // Placeholder for refresh token revocation logic when rotation is implemented.
+    return;
+  }
+
+  setRefreshTokenCookie(res: Response, refreshToken: string): void {
+    res.cookie('refresh_token', refreshToken, this.authConfig.refreshCookieOptions);
+  }
+
+  buildLoginResponse(
+    user: User,
+    tokens: GeneratedTokens,
+  ): {
+    access_token: string;
+    expires_in: number;
+    token_type: 'Bearer';
+    user: {
+      id: string;
+      email: string;
+      roles: string[];
+    };
+  } {
+    return {
+      access_token: tokens.accessToken,
+      expires_in: tokens.expiresInSeconds,
+      token_type: 'Bearer',
+      user: {
+        id: this.serializeUserId(user.id),
+        email: user.email,
+        roles: this.resolveRoles(user),
+      },
+    };
+  }
+
+  async enforceUnauthorizedDelay(): Promise<void> {
+    const { min, max } = this.authConfig.unauthorizedDelayRangeMs;
+    const delta = Math.max(max - min, 0);
+    const delay = min + (delta > 0 ? Math.floor(Math.random() * (delta + 1)) : 0);
+    await new Promise((resolve) => {
+      setTimeout(resolve, delay);
+    });
+  }
+
+  sanitizeUser(user: User): Omit<User, 'passwordHash'> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
+
+  private async safeVerifyPassword(hash: string | null, password: string): Promise<boolean> {
+    const hashToVerify =
+      hash ?? (await this.getFallbackPasswordHash());
+
     try {
-      return await bcrypt.hash(password, this.saltRounds);
+      return await argon2.verify(hashToVerify, password, this.argon2Options);
     } catch (error) {
-      this.logger.error('Failed to hash password:', error);
-      throw new InternalServerErrorException('Failed to process password');
+      this.logger.error('Password verification failed', { error });
+      return false;
     }
   }
 
-  /**
-   * Verify a password against its hash
-   * @param password - Plain text password
-   * @param hash - Hashed password
-   * @returns Boolean indicating if password is valid
-   */
-  async verifyPassword(password: string, hash: string): Promise<boolean> {
-    try {
-      return await bcrypt.compare(password, hash);
-    } catch (error) {
-      this.logger.error('Failed to verify password:', error);
-      return false;
+  private async getFallbackPasswordHash(): Promise<string> {
+    if (!this.fallbackPasswordHashPromise) {
+      this.fallbackPasswordHashPromise = argon2.hash(randomUUID(), this.argon2Options);
     }
+
+    return this.fallbackPasswordHashPromise;
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private isInactive(user: User): boolean {
+    return 'isActive' in user ? (user as unknown as { isActive?: boolean }).isActive === false : false;
+  }
+
+  private isBanned(user: User): boolean {
+    return 'isBanned' in user ? (user as unknown as { isBanned?: boolean }).isBanned === true : false;
+  }
+
+  private resolveRoles(user: User): string[] {
+    if ('roles' in user) {
+      const rawRoles = (user as unknown as { roles?: string[] | null }).roles;
+      if (Array.isArray(rawRoles) && rawRoles.length > 0) {
+        return rawRoles.map((role) => String(role));
+      }
+    }
+
+    return ['user'];
+  }
+
+  private serializeUserId(id: number | string): string {
+    return typeof id === 'string' ? id : String(id);
   }
 }
