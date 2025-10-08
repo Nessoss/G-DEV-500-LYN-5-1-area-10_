@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   return (
@@ -14,29 +15,30 @@ export function Header() {
             alt="Logo"
             width={50}
             height={50}
-            className="h-14 w-auto"
+            className="h-14 w-auto hover:scale-110 transition-transform duration-300"
           />
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-6 pl-25">
+        <nav className="hidden md:flex items-center gap-6 pl-45">
           <Link 
             href="/" 
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
           >
             Accueil
           </Link>
           <Link 
             href="/areas" 
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform flex items-center gap-1"
           >
             <Settings className="h-4 w-4" />
             Mes Areas
           </Link>
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Theme Toggle & Auth Buttons */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" asChild>
             <Link href="/login">Login</Link>
           </Button>

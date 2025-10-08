@@ -21,7 +21,7 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mt-6 text-lg leading-8 text-muted max-w-2xl mx-auto">
+            <p className="mt-6 text-lg leading-8 max-w-2xl mx-auto">
               Connectez vos applications préférées et automatisez vos tâches quotidiennes.
               Simple, rapide et puissant.
             </p>
@@ -33,7 +33,10 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+              >
                 En savoir plus
               </Button>
             </div>
@@ -48,16 +51,16 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Pourquoi choisir AREA ?
             </h2>
-            <p className="mt-4 text-lg text-muted">
+            <p className="mt-4 text-lg">
               Une solution complète pour automatiser votre quotidien
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+            <Card className="border-2 hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10 hover-lift">
               <CardHeader>
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Zap className="h-6 w-6 text-primary" />
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition-all duration-300">
+                  <Zap className="h-6 w-6 text-primary animate-pulse-subtle" />
                 </div>
                 <CardTitle>Rapide et efficace</CardTitle>
                 <CardDescription>
@@ -85,9 +88,9 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg">
+            <Card className="border-2 hover:border-secondary/70 hover:bg-secondary/5 dark:hover:bg-secondary/10 hover-lift">
               <CardHeader>
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-all duration-300">
                   <Shield className="h-6 w-6 text-secondary" />
                 </div>
                 <CardTitle>Sécurisé</CardTitle>
@@ -116,10 +119,10 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 hover:border-accent/50 transition-all duration-300 hover:shadow-lg">
+            <Card className="border-2 hover:border-orange-400/70 hover:bg-orange-50/30 dark:hover:bg-orange-900/20 hover-lift">
               <CardHeader>
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
-                  <Users className="h-6 w-6 text-accent" />
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 hover:bg-accent/20 transition-all duration-300">
+                  <Users className="h-6 w-6 text-accent animate-bounce-subtle" />
                 </div>
                 <CardTitle>Collaboratif</CardTitle>
                 <CardDescription>
@@ -157,7 +160,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Prêt à commencer ?
             </h2>
-            <p className="mt-6 text-lg leading-8 text-muted">
+            <p className="mt-6 text-lg leading-8">
               Rejoignez des milliers d&apos;utilisateurs qui automatisent leur quotidien
             </p>
             <div className="mt-10 flex items-center justify-center gap-6">
@@ -173,7 +176,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t relative">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-foreground/70">
             © 2025 AREA. Tous droits réservés.
           </p>
         </div>

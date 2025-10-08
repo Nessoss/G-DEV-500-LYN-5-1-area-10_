@@ -188,7 +188,7 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
 
             {/* Flèche */}
             <div className="flex justify-center">
-              <div className="text-4xl text-muted-foreground">↓</div>
+              <div className="text-4xl text-foreground/60 font-bold">↓</div>
             </div>
 
             {/* Section Réaction */}

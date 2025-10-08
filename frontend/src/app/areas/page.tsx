@@ -126,7 +126,7 @@ export default function AreasPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg text-muted-foreground">Chargement de vos areas...</p>
+            <p className="text-lg text-foreground/70">Chargement de vos areas...</p>
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function AreasPage() {
               {" "}Areas
             </span>
           </h1>
-          <p className="text-lg text-muted max-w-2xl mx-auto">
+          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Gérez vos automatisations et créez de nouvelles connections entre vos applications
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function AreasPage() {
               <h2 className="text-2xl font-semibold text-foreground mb-4">
                 Aucune area créée
               </h2>
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              <p className="text-foreground/70 mb-8 max-w-md mx-auto">
                 Commencez par créer votre première automatisation pour connecter vos applications préférées
               </p>
             </div>
@@ -194,13 +194,17 @@ export default function AreasPage() {
               {areas.map((area) => (
                 <Card
                   key={area.id}
-                  className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg w-full"
+                  className={`border-2 hover-lift w-full bg-card/50 backdrop-blur ${
+                    area.isActive 
+                      ? 'hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10' 
+                      : 'hover:border-orange-400/70 hover:bg-orange-50/30 dark:hover:bg-orange-900/20'
+                  }`}
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
-                          <Settings className="h-6 w-6 text-primary" />
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition-all duration-300 flex-shrink-0">
+                          <Settings className="h-6 w-6 text-primary hover:rotate-12 transition-transform duration-300" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-xl font-semibold truncate">{area.name}</CardTitle>
@@ -224,7 +228,7 @@ export default function AreasPage() {
                   <CardContent className="pt-0 pb-6">
                     <div className="space-y-6">
                       {/* Action */}
-                      <div className="rounded-xl border p-4 bg-primary/5">
+                      <div className="rounded-xl border-2 border-primary/20 p-4 bg-primary/10 dark:bg-primary/5">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-sm font-semibold text-primary uppercase tracking-wide">
                             🔔 Déclencheur
@@ -232,32 +236,32 @@ export default function AreasPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-foreground text-lg">{area.action.service}</p>
-                          <p className="text-muted-foreground mt-1">{area.action.trigger}</p>
+                          <p className="text-foreground/70 mt-1">{area.action.trigger}</p>
                         </div>
                       </div>
 
                       {/* Flèche */}
                       <div className="flex justify-center">
-                        <div className="text-2xl text-muted-foreground">↓</div>
+                        <div className="text-2xl text-foreground/60 font-bold">↓</div>
                       </div>
 
                       {/* Reaction */}
-                      <div className="rounded-xl border p-4 bg-secondary/5">
+                      <div className="rounded-xl border-2 border-secondary/20 p-4 bg-secondary/10 dark:bg-secondary/5">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-sm font-semibold text-secondary uppercase tracking-wide">
+                          <span className="text-sm font-semibold text-secondary-foreground uppercase tracking-wide">
                             ⚡ Action
                           </span>
                         </div>
                         <div>
                           <p className="font-semibold text-foreground text-lg">{area.reaction.service}</p>
-                          <p className="text-muted-foreground mt-1">{area.reaction.action}</p>
+                          <p className="text-foreground/70 mt-1">{area.reaction.action}</p>
                         </div>
                       </div>
                     </div>
                   </CardContent>
 
                   <CardFooter className="flex justify-between items-center pt-4 border-t">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/70">
                       Créé le {new Date(area.createdAt).toLocaleDateString('fr-FR')}
                     </div>
                     <Button
@@ -292,6 +296,14 @@ export default function AreasPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateArea}
       />
+      {/* Footer */}
+      <footer className="border-t relative">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <p className="text-center text-sm text-foreground/70">
+            © 2025 AREA. Tous droits réservés.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
