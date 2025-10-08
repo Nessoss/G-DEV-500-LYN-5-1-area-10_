@@ -49,18 +49,18 @@ export function Select({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={cn(
           "w-full flex items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background",
-          "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "placeholder:text-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
           isOpen && "ring-2 ring-ring ring-offset-2"
         )}
       >
         <span className={cn(
-          selectedOption ? "text-foreground" : "text-muted-foreground"
+          selectedOption ? "text-foreground" : "text-foreground/70"
         )}>
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDown className={cn(
-          "h-4 w-4 text-muted-foreground transition-transform",
+          "h-4 w-4 text-foreground/70 transition-transform",
           isOpen && "rotate-180"
         )} />
       </button>
@@ -76,7 +76,7 @@ export function Select({
           {/* Menu dropdown */}
           <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-input bg-background shadow-lg">
             {options.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">
+              <div className="px-3 py-2 text-sm text-foreground/70">
                 Aucune option disponible
               </div>
             ) : (

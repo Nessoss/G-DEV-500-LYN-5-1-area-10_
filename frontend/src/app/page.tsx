@@ -176,7 +176,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t relative">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-foreground/70">
             © 2025 AREA. Tous droits réservés.
           </p>
         </div>

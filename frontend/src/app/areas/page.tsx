@@ -126,7 +126,7 @@ export default function AreasPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg text-muted-foreground">Chargement de vos areas...</p>
+            <p className="text-lg text-foreground/70">Chargement de vos areas...</p>
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function AreasPage() {
               {" "}Areas
             </span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Gérez vos automatisations et créez de nouvelles connections entre vos applications
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function AreasPage() {
               <h2 className="text-2xl font-semibold text-foreground mb-4">
                 Aucune area créée
               </h2>
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              <p className="text-foreground/70 mb-8 max-w-md mx-auto">
                 Commencez par créer votre première automatisation pour connecter vos applications préférées
               </p>
             </div>
@@ -261,7 +261,7 @@ export default function AreasPage() {
                   </CardContent>
 
                   <CardFooter className="flex justify-between items-center pt-4 border-t">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/70">
                       Créé le {new Date(area.createdAt).toLocaleDateString('fr-FR')}
                     </div>
                     <Button
@@ -296,6 +296,14 @@ export default function AreasPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateArea}
       />
+      {/* Footer */}
+      <footer className="border-t relative">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <p className="text-center text-sm text-foreground/70">
+            © 2025 AREA. Tous droits réservés.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
