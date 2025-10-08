@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, ProviderAccount } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 
 @Injectable()
@@ -33,6 +33,67 @@ export class UsersService {
   }): Promise<User> {
     return this.database.user.create({
       data,
+    });
+  }
+
+  /**
+   * Create a provider account for a user
+   */
+  async createProviderAccount(data: {
+    userId: number;
+    provider: string;
+    providerUserId: string;
+    accessToken: string;
+    refreshToken?: string | null;
+    expiresAt?: Date | null;
+  }): Promise<ProviderAccount> {
+    return this.database.providerAccount.create({
+      data,
+    });
+  }
+
+  /**
+   * Update or create a provider account for a user
+   */
+  async upsertProviderAccount(data: {
+    userId: number;
+    provider: string;
+    providerUserId: string;
+    accessToken: string;
+    refreshToken?: string | null;
+    expiresAt?: Date | null;
+  }): Promise<ProviderAccount> {
+    return this.database.providerAccount.upsert({
+      where: {
+        userId_provider: {
+          userId: data.userId,
+          provider: data.provider,
+        },
+      },
+      update: {
+        providerUserId: data.providerUserId,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresAt: data.expiresAt,
+      },
+      create: data,
+    });
+  }
+
+  /**
+   * Find a provider account by user ID and provider
+   */
+  async findProviderAccount(
+    userId: number,
+    provider: string,
+  ): Promise<ProviderAccount | null> {
+    return this.database.providerAccount.findUnique({
+      where: {
+        userId_provider: {
+          userId,
+          provider,
+        },
+      },
     });
   }
 }
