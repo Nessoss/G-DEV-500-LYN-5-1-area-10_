@@ -27,9 +27,36 @@
 
 ## Project setup
 
+### 🚀 Development Setup (Recommended)
+
+For development with hot reload:
+
+#### 1. Install dependencies
 ```bash
 $ npm install
 ```
+
+#### 2. Environment setup
+Copy the environment file and configure your database:
+```bash
+$ cp ../.env.example ../.env
+```
+
+#### 3. Build the docker
+```bash
+$ cd .. && docker-compose up --build
+```
+
+### 🐳 Production Testing
+
+To test the full stack in production mode:
+```bash
+$ cd .. && docker-compose up
+```
+This will start:
+- PostgreSQL (port 5433)
+- Backend API (port 8080) 
+- Frontend Web (port 8081)
 
 ## Compile and run the project
 

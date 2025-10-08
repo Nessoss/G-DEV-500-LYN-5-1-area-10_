@@ -1,102 +1,182 @@
-import Image from "next/image";
+import { ArrowRight, Zap, Shield, Users } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen relative">
+      {/* Fond gradient global uniforme */}
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 -z-10" />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+          <div className="text-center">
+
+            <h1 className="text-5xl font-bold tracking-tight text-foreground sm:text-7xl">
+              Bienvenue sur
+              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                {" "}AREA
+              </span>
+            </h1>
+
+            <p className="mt-6 text-lg leading-8 text-muted max-w-2xl mx-auto">
+              Connectez vos applications préférées et automatisez vos tâches quotidiennes.
+              Simple, rapide et puissant.
+            </p>
+
+            <div className="mt-10 flex items-center justify-center gap-6">
+              <Link href="/areas">
+                <Button size="lg" className="gap-2">
+                  Commencer
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline">
+                En savoir plus
+              </Button>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 sm:py-32 relative">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Pourquoi choisir AREA ?
+            </h2>
+            <p className="mt-4 text-lg text-muted">
+              Une solution complète pour automatiser votre quotidien
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <Card className="border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <Zap className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Rapide et efficace</CardTitle>
+                <CardDescription>
+                  Automatisez vos tâches en quelques clics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground/80 mb-4">
+                  Créez des automatisations puissantes sans écrire une seule ligne de code.
+                </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Interface intuitive et facile à prendre en main</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Déclenchement instantané de vos actions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-0.5 font-bold">✓</span>
+                    <span>Connectez plus de 10 services populaires</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
+                  <Shield className="h-6 w-6 text-secondary" />
+                </div>
+                <CardTitle>Sécurisé</CardTitle>
+                <CardDescription>
+                  Vos données sont protégées
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground/80 mb-4">
+                  Chiffrement de bout en bout et conformité aux standards de sécurité.
+                </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Authentification OAuth sécurisée</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Hébergement conforme RGPD</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary mt-0.5 font-bold">✓</span>
+                    <span>Surveillance 24/7 et backups automatiques</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 hover:border-accent/50 transition-all duration-300 hover:shadow-lg">
+              <CardHeader>
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
+                  <Users className="h-6 w-6 text-accent" />
+                </div>
+                <CardTitle>Collaboratif</CardTitle>
+                <CardDescription>
+                  Travaillez en équipe
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground/80 mb-4">
+                  Partagez vos automatisations et collaborez avec votre équipe.
+                </p>
+                <ul className="space-y-2 text-sm text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Espaces de travail partagés</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Gestion des rôles et permissions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent mt-0.5 font-bold">✓</span>
+                    <span>Templates réutilisables par toute l&apos;équipe</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative overflow-hidden py-24 sm:py-32">
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Prêt à commencer ?
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-muted">
+              Rejoignez des milliers d&apos;utilisateurs qui automatisent leur quotidien
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-6">
+              <Button size="lg" className="gap-2">
+                Créer un compte
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t relative">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <p className="text-center text-sm text-muted-foreground">
+            © 2025 AREA. Tous droits réservés.
+          </p>
+        </div>
       </footer>
     </div>
   );

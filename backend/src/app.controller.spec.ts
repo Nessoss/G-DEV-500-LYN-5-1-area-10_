@@ -19,4 +19,18 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
+
+  describe('about.json', () => {
+    it('should return about information with current time and services', () => {
+      const result = appController.getAbout();
+
+      expect(result).toHaveProperty('client');
+      expect(result).toHaveProperty('server');
+      expect(result.client).toHaveProperty('host');
+      expect(result.server).toHaveProperty('current_time');
+      expect(result.server).toHaveProperty('services');
+      expect(Array.isArray(result.server.services)).toBe(true);
+      expect(typeof result.server.current_time).toBe('number');
+    });
+  });
 });
