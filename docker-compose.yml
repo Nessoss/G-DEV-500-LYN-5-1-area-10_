@@ -38,6 +38,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: server
+    env_file:
+      - ./.env
     ports:
       - "8080:3000"
     environment:

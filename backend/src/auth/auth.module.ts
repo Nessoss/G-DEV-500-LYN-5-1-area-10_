@@ -1,12 +1,34 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
+import { AuthConfigService } from './auth.config';
+import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RateLimitService } from './rate-limit.service';
 
 @Module({
-  imports: [UsersModule],
+  imports: [
+    UsersModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      signOptions: {
+        algorithm: 'RS256',
+      },
+    }),
+  ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    AuthConfigService,
+    RateLimitService,
+    JwtAccessStrategy,
+    JwtRefreshStrategy,
+    JwtAuthGuard,
+  ],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
