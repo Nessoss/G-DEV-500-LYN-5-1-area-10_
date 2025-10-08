@@ -20,7 +20,7 @@ export function Header() {
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-6 pl-25">
+        <nav className="hidden md:flex items-center gap-6 pl-45">
           <Link 
             href="/" 
             className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
