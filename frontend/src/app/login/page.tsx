@@ -1,22 +1,26 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
     try {
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,14 +34,23 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
+        // Stocker le token d'accès
+        localStorage.setItem("access_token", data.access_token)
+
         // Redirection après connexion réussie
-        window.location.href = "/areas"
+        router.push("/areas")
       } else {
-        alert(data.error || "Erreur de connexion")
+        if (response.status === 401) {
+          setError("Email ou mot de passe incorrect")
+        } else if (response.status === 400) {
+          setError(data.message || "Trop de tentatives. Réessayez plus tard.")
+        } else {
+          setError(data.message || "Erreur de connexion")
+        }
       }
     } catch (error) {
       console.error("Erreur:", error)
-      alert("Une erreur est survenue")
+      setError("Une erreur est survenue. Veuillez réessayer.")
     } finally {
       setIsLoading(false)
     }
@@ -56,6 +69,12 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -92,10 +111,10 @@ export default function LoginPage() {
               {isLoading ? "Connexion..." : "Se connecter"}
             </Button>
 
-            <p className="text-left text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
               <Link href="/signup" className="text-primary hover:underline">
-                Se connecter
+                S&apos;inscrire
               </Link>
             </p>
           </form>
