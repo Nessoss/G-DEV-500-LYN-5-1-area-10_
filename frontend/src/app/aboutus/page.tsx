@@ -8,7 +8,7 @@ export default function AboutUsPage() {
     {
       name: "Sophie Martin",
       role: "CEO & Co-fondatrice",
-      description: "Passionnée d'innovation et d'automatisation, Sophie guide AREA vers l'excellence.",
+      description: "Passionnée d&apos;innovation et d&apos;automatisation, Sophie guide AREA vers l&apos;excellence.",
       avatar: "/api/placeholder/120/120"
     },
     {
@@ -20,7 +20,7 @@ export default function AboutUsPage() {
     {
       name: "Marie Lefebvre",
       role: "Head of Product",
-      description: "Designer UX/UI experte, Marie façonne l'expérience utilisateur d'AREA.",
+      description: "Designer UX/UI experte, Marie façonne l&apos;expérience utilisateur d&apos;AREA.",
       avatar: "/api/placeholder/120/120"
     },
     {
@@ -57,7 +57,7 @@ export default function AboutUsPage() {
   const values = [
     {
       title: "Innovation",
-      description: "Nous repoussons constamment les limites de l'automatisation pour vous offrir les meilleures solutions.",
+      description: "Nous repoussons constamment les limites de l&apos;automatisation pour vous offrir les meilleures solutions.",
       icon: Lightbulb,
       color: "primary"
     },
@@ -75,7 +75,7 @@ export default function AboutUsPage() {
     },
     {
       title: "Collaboration", 
-      description: "Nous favorisons le partage et la collaboration pour créer une communauté d'utilisateurs engagés.",
+      description: "Nous favorisons le partage et la collaboration pour créer une communauté d&apos;utilisateurs engagés.",
       icon: Users,
       color: "primary"
     }
@@ -402,7 +402,7 @@ export default function AboutUsPage() {
               Rejoignez l&apos;Aventure AREA
             </h2>
             <p className="mt-6 text-lg leading-8 text-foreground/80">
-              Faites partie de la révolution de l'automatisation. 
+              Faites partie de la révolution de l&apos;automatisation. 
               Créez votre première automation en moins de 5 minutes.
             </p>
             <div className="mt-10 flex items-center justify-center gap-6">

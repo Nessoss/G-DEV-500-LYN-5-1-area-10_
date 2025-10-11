@@ -65,7 +65,7 @@ export default function PricingPage() {
         "Support téléphonique 24/7",
         "Templates personnalisés",
         "Webhooks avancés",
-        "Gestion d&apos;équipe",
+        "Gestion d'équipe",
         "Analytics avancées",
         "SLA 99.9% garanti",
         "Sauvegarde et export"
@@ -108,7 +108,7 @@ export default function PricingPage() {
       business: "Avancés"
     },
     {
-      category: "Gestion d&apos;équipe", 
+      category: "Gestion d'équipe", 
       free: "Non",
       pro: "Non",
       business: "Oui"
@@ -149,7 +149,7 @@ export default function PricingPage() {
       role: "Freelance",
       company: "Consultante",
       plan: "Gratuit",
-      testimonial: "J&apos;ai commencé avec le plan gratuit et c&apos;était déjà très puissant. Excellent pour débuter avec l&apos;automatisation.",
+      testimonial: "J'ai commencé avec le plan gratuit et c'était déjà très puissant. Excellent pour débuter avec l'automatisation.",
       avatar: "S"
     }
   ];
@@ -161,15 +161,15 @@ export default function PricingPage() {
     },
     {
       question: "Y a-t-il des frais cachés ?",
-      answer: "Non, nos prix sont transparents. Pas de frais d&apos;installation, de résiliation ou autres frais cachés."
+      answer: "Non, nos prix sont transparents. Pas de frais d'installation, de résiliation ou autres frais cachés."
     },
     {
       question: "Que se passe-t-il si je dépasse mes limites ?",
-      answer: "Nous vous préviendrons avant d&apos;atteindre vos limites. Vous pourrez upgrader votre plan ou optimiser vos automatisations."
+      answer: "Nous vous préviendrons avant d'atteindre vos limites. Vous pourrez upgrader votre plan ou optimiser vos automatisations."
     },
     {
       question: "Proposez-vous des remises pour les associations ?",
-      answer: "Oui, nous offrons des remises spéciales pour les associations, écoles et organisations à but non lucratif. Contactez-nous pour plus d&apos;informations."
+      answer: "Oui, nous offrons des remises spéciales pour les associations, écoles et organisations à but non lucratif. Contactez-nous pour plus 'informations."
     }
   ];
 

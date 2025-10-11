@@ -4,7 +4,7 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select } from "@/components/ui/select"
+import { SelectDropdown } from "@/components/ui/select"
 
 interface CreateAreaModalProps {
   isOpen: boolean
@@ -21,7 +21,7 @@ interface CreateAreaModalProps {
 // Services disponibles avec leurs déclencheurs et actions
 const services = {
   Gmail: {
-    triggers: ["Nouvel email reçu", "Email d'un expéditeur spécifique", "Email avec un mot-clé"],
+    triggers: ["Nouvel email reçu", "Email d&apos;un expéditeur spécifique", "Email avec un mot-clé"],
     actions: ["Envoyer un email", "Marquer comme lu", "Archiver"]
   },
   Discord: {
@@ -33,7 +33,7 @@ const services = {
     actions: ["Jouer une playlist", "Mettre en pause", "Changer de chanson"]
   },
   "Philips Hue": {
-    triggers: ["Mouvement détecté", "Changement d'intensité"],
+    triggers: ["Mouvement détecté", "Changement d&apos;intensité"],
     actions: ["Changer la couleur", "Allumer/Éteindre", "Modifier la luminosité"]
   },
   Slack: {
@@ -41,7 +41,7 @@ const services = {
     actions: ["Envoyer un message", "Changer le statut", "Créer un channel"]
   },
   YouTube: {
-    triggers: ["Nouvelle vidéo d'un channel", "Vidéo ajoutée aux favoris"],
+    triggers: ["Nouvelle vidéo d&apos;un channel", "Vidéo ajoutée aux favoris"],
     actions: ["Télécharger une vidéo", "Ajouter à une playlist"]
   }
 }
@@ -160,10 +160,10 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Service</label>
-                  <Select
+                  <SelectDropdown
                     options={serviceOptions}
                     value={formData.action.service}
-                    onValueChange={(value) => setFormData({
+                    onValueChange={(value: string) => setFormData({
                       ...formData,
                       action: { service: value, trigger: "" }
                     })}
@@ -172,10 +172,10 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Déclencheur</label>
-                  <Select
+                  <SelectDropdown
                     options={triggerOptions}
                     value={formData.action.trigger}
-                    onValueChange={(value) => setFormData({
+                    onValueChange={(value: string) => setFormData({
                       ...formData,
                       action: { ...formData.action, trigger: value }
                     })}
@@ -197,10 +197,10 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Service</label>
-                  <Select
+                  <SelectDropdown
                     options={reactionServiceOptions}
                     value={formData.reaction.service}
-                    onValueChange={(value) => setFormData({
+                    onValueChange={(value: string) => setFormData({
                       ...formData,
                       reaction: { service: value, action: "" }
                     })}
@@ -209,10 +209,10 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Action</label>
-                  <Select
+                  <SelectDropdown
                     options={actionOptions}
                     value={formData.reaction.action}
-                    onValueChange={(value) => setFormData({
+                    onValueChange={(value: string) => setFormData({
                       ...formData,
                       reaction: { ...formData.reaction, action: value }
                     })}

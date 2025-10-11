@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+
 
 export default function SignUpPage() {
   const [nom, setNom] = useState("")
@@ -44,7 +44,7 @@ export default function SignUpPage() {
         // Redirection après inscription réussie
         window.location.href = "/login"
       } else {
-        alert(data.error || "Erreur lors de l'inscription")
+        alert(data.error || "Erreur lors de l&apos;inscription")
       }
     } catch (error) {
       console.error("Erreur:", error)
@@ -142,7 +142,7 @@ export default function SignUpPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Inscription..." : "S'inscrire"}
+              {isLoading ? "Inscription..." : "S&apos;inscrire"}
             </Button>
           </form>
         </CardContent>

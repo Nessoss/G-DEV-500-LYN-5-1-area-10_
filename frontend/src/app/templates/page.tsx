@@ -18,7 +18,7 @@ export default function TemplatesPage() {
     {
       id: 1,
       title: "Lead Nurturing Automatique",
-      description: "Séquence d&apos;emails automatique pour convertir vos leads en clients",
+      description: "Séquence d'emails automatique pour convertir vos leads en clients",
       category: "Marketing",
       difficulty: "Intermédiaire",
       setupTime: "10 min",
@@ -27,7 +27,7 @@ export default function TemplatesPage() {
       author: "AREA Team",
       services: ["Gmail", "Google Sheets", "Slack"],
       triggers: ["Nouveau lead dans Google Sheets"],
-      actions: ["Série d&apos;emails personnalisés", "Notification Slack équipe vente"],
+      actions: ["Série d'emails personnalisés", "Notification Slack équipe vente"],
       featured: true,
       premium: false
     },
@@ -69,7 +69,7 @@ export default function TemplatesPage() {
     {
       id: 4,
       title: "Onboarding Client Automatisé",
-      description: "Séquence d&apos;accueil automatique pour nouveaux clients",
+      description: "Séquence d'accueil automatique pour nouveaux clients",
       category: "Marketing",
       difficulty: "Facile",
       setupTime: "8 min",
@@ -94,7 +94,7 @@ export default function TemplatesPage() {
     },
     {
       id: 6,
-      title: "Synchronisation d&apos;Équipe",
+      title: "Synchronisation d'Équipe",
       description: "Synchronise les tâches entre Trello, Slack et Google Calendar",
       category: "Productivité",
       difficulty: "Intermédiaire",

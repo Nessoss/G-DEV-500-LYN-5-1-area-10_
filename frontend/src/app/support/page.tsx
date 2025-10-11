@@ -115,7 +115,7 @@ export default function SupportPage() {
           a: "Connectez-vous à votre dashboard, cliquez sur 'Nouvelle Area', choisissez un déclencheur et une action, puis activez votre automatisation."
         },
         {
-          q: "Combien d&apos;automatisations puis-je créer ?",
+          q: "Combien d'automatisations puis-je créer ?",
           a: "Le plan gratuit permet 10 automatisations actives. Les plans Pro et Business offrent respectivement 100 et un nombre illimité."
         }
       ]
@@ -138,11 +138,11 @@ export default function SupportPage() {
       questions: [
         {
           q: "Puis-je annuler mon abonnement à tout moment ?",
-          a: "Oui, vous pouvez annuler votre abonnement depuis votre dashboard. L&apos;annulation prend effet à la fin de votre période de facturation."
+          a: "Oui, vous pouvez annuler votre abonnement depuis votre dashboard. L'annulation prend effet à la fin de votre période de facturation."
         },
         {
           q: "Proposez-vous des remises pour les associations ?",
-          a: "Oui, nous offrons des tarifs préférentiels pour les associations et organisations à but non lucratif. Contactez-nous pour plus d&apos;informations."
+          a: "Oui, nous offrons des tarifs préférentiels pour les associations et organisations à but non lucratif. Contactez-nous pour plus d'informations."
         }
       ]
     }
@@ -158,7 +158,7 @@ export default function SupportPage() {
     },
     {
       title: "Discord AREA",
-      description: "Chat en temps réel avec d&apos;autres utilisateurs et notre équipe",
+      description: "Chat en temps réel avec d'autres utilisateurs et notre équipe",
       members: "1,200+ membres", 
       icon: MessageSquare,
       link: "https://discord.gg/area"

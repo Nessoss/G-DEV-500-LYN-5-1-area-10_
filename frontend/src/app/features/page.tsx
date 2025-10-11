@@ -12,7 +12,7 @@ export default function FeaturesPage() {
       color: "primary",
       benefits: [
         "Interface drag & drop simple",
-        "Templates prêts à l&apos;emploi", 
+        "Templates prêts à l'emploi", 
         "Assistant intelligent",
         "Aperçu en temps réel"
       ]
@@ -30,7 +30,7 @@ export default function FeaturesPage() {
       ]
     },
     {
-      title: "Collaboration d&apos;équipe",
+      title: "Collaboration d'équipe",
       description: "Travaillez ensemble sur vos automatisations. Partagez, commentez et gérez les permissions facilement.",
       icon: Users,
       color: "accent",
@@ -48,7 +48,7 @@ export default function FeaturesPage() {
       color: "primary",
       benefits: [
         "Déclenchement en < 1 seconde",
-        "99.9% d&apos;uptime garanti",
+        "99.9% d'uptime garanti",
         "Surveillance proactive",
         "Auto-scaling automatique"
       ]
@@ -109,7 +109,7 @@ export default function FeaturesPage() {
   const advancedFeatures = [
     {
       title: "Webhooks personnalisés",
-      description: "Connectez n&apos;importe quelle API avec nos webhooks avancés et notre système de requêtes HTTP.",
+      description: "Connectez n'importe quelle API avec nos webhooks avancés et notre système de requêtes HTTP.",
       icon: Webhook,
       color: "primary"
     },
@@ -158,7 +158,7 @@ export default function FeaturesPage() {
     },
     {
       title: "Gestion de projet",
-      description: "Synchronisez vos outils de projet et optimisez vos workflows d&apos;équipe.",
+      description: "Synchronisez vos outils de projet et optimisez vos workflows d'équipe.",
       icon: Settings,
       examples: [
         "Nouvelle tâche Trello → Notification équipe",

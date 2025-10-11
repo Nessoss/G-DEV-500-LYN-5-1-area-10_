@@ -19,7 +19,7 @@ export default function IntegrationsPage() {
   const integrations = [
     {
       name: "Gmail",
-      description: "Automatisez vos emails et gérez votre boîte de réception",
+      description: "Automatisez et gérez vos emails",
       category: "Communication",
       logo: "📧",
       popularity: 5,

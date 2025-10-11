@@ -9,14 +9,14 @@ export default function BlogPage() {
     { name: "Tous", count: 28, color: "primary" },
     { name: "Tutoriels", count: 12, color: "secondary" },
     { name: "Nouveautés", count: 8, color: "accent" },
-    { name: "Cas d&apos;usage", count: 6, color: "primary" },
+    { name: "Cas d'usage", count: 6, color: "primary" },
     { name: "Techniques", count: 2, color: "secondary" }
   ];
 
   const featuredArticle = {
     id: 1,
     title: "10 Automatisations qui vont révolutionner votre productivité en 2025",
-    excerpt: "Découvrez les tendances d&apos;automatisation les plus impactantes de cette année et comment les implémenter avec AREA.",
+    excerpt: "Découvrez les tendances d'automatisation les plus impactantes de cette année et comment les implémenter avec AREA.",
     author: "Sophie Martin",
     authorRole: "Product Manager",
     date: "5 janvier 2025",
@@ -111,13 +111,13 @@ export default function BlogPage() {
     },
     {
       id: 7,
-      title: "Retour d&apos;expérience : Comment TechCorp a économisé 40h/semaine",
-      excerpt: "Étude de cas détaillée sur l&apos;implémentation d&apos;AREA dans une entreprise de 200 personnes.",
+      title: "Retour d'expérience : Comment TechCorp a économisé 40h/semaine",
+      excerpt: "Étude de cas détaillée sur l'implémentation d'AREA dans une entreprise de 200 personnes.",
       author: "Marie Dubois",
       authorRole: "Customer Success",
       date: "5 décembre 2024",
       readTime: "11 min",
-      category: "Cas d&apos;usage",
+      category: "Cas d'usage",
       image: "📊",
       tags: ["Case Study", "Enterprise", "ROI"],
       views: "1.9K",
@@ -126,7 +126,7 @@ export default function BlogPage() {
     },
     {
       id: 8,
-      title: "Notion + Gmail : L&apos;alliance parfaite pour la gestion de projets",
+      title: "Notion + Gmail : L'alliance parfaite pour la gestion de projets",
       excerpt: "Transformez vos emails en tâches Notion automatiquement et ne perdez plus jamais une information.",
       author: "Sophie Martin",
       authorRole: "Product Manager", 
