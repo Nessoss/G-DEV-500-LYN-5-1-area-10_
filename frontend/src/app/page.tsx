@@ -2,6 +2,7 @@ import { ArrowRight, Zap, Shield, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import ServicesCarousel from "@/components/ServicesCarousel"
 
 export default function Home() {
   return (
@@ -43,6 +44,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Services Carousel */}
+      <ServicesCarousel />
 
       {/* Features Section */}
       <section className="py-24 sm:py-32 relative">
