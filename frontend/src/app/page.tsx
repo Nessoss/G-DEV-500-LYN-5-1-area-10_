@@ -33,12 +33,14 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button 
-                size="lg" 
-                variant="outline"
-              >
-                En savoir plus
-              </Button>
+              <Link href="/aboutus">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                >
+                  En savoir plus
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

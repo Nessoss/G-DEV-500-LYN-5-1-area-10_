@@ -20,7 +20,7 @@ export function Header() {
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-6 pl-45">
+        <nav className="hidden xl:flex items-center gap-3 pl-45">
           <Link 
             href="/" 
             className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
@@ -32,7 +32,49 @@ export function Header() {
             className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform flex items-center gap-1"
           >
             <Settings className="h-4 w-4" />
-            Mes Areas
+            Areas
+          </Link>
+          <Link 
+            href="/features" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Fonctionnalités
+          </Link>
+          <Link 
+            href="/pricing" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Tarifs
+          </Link>
+          <Link 
+            href="/integrations" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Intégrations
+          </Link>
+          <Link 
+            href="/templates" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Templates
+          </Link>
+          <Link 
+            href="/docs" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Docs
+          </Link>
+          <Link 
+            href="/blog" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Blog
+          </Link>
+          <Link 
+            href="/support" 
+            className="text-sm font-medium text-foreground/80 hover:text-orange-500 dark:hover:text-orange-400 transition-all duration-300 hover:scale-105 transform"
+          >
+            Support
           </Link>
         </nav>
 
