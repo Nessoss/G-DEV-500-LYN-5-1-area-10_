@@ -6,7 +6,10 @@ import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfigService } from '../auth.config';
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(private readonly authConfig: AuthConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([

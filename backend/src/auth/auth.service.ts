@@ -39,7 +39,9 @@ export class AuthService {
     private readonly authConfig: AuthConfigService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<Omit<User, 'passwordHash'>> {
     const email = this.normalizeEmail(registerDto.email);
     const password = registerDto.password;
 
@@ -141,7 +143,11 @@ export class AuthService {
   }
 
   setRefreshTokenCookie(res: Response, refreshToken: string): void {
-    res.cookie('refresh_token', refreshToken, this.authConfig.refreshCookieOptions);
+    res.cookie(
+      'refresh_token',
+      refreshToken,
+      this.authConfig.refreshCookieOptions,
+    );
   }
 
   buildLoginResponse(
@@ -172,7 +178,8 @@ export class AuthService {
   async enforceUnauthorizedDelay(): Promise<void> {
     const { min, max } = this.authConfig.unauthorizedDelayRangeMs;
     const delta = Math.max(max - min, 0);
-    const delay = min + (delta > 0 ? Math.floor(Math.random() * (delta + 1)) : 0);
+    const delay =
+      min + (delta > 0 ? Math.floor(Math.random() * (delta + 1)) : 0);
     await new Promise((resolve) => {
       setTimeout(resolve, delay);
     });
@@ -184,9 +191,11 @@ export class AuthService {
     return safeUser;
   }
 
-  private async safeVerifyPassword(hash: string | null, password: string): Promise<boolean> {
-    const hashToVerify =
-      hash ?? (await this.getFallbackPasswordHash());
+  private async safeVerifyPassword(
+    hash: string | null,
+    password: string,
+  ): Promise<boolean> {
+    const hashToVerify = hash ?? (await this.getFallbackPasswordHash());
 
     try {
       return await argon2.verify(hashToVerify, password, this.argon2Options);
@@ -198,7 +207,10 @@ export class AuthService {
 
   private async getFallbackPasswordHash(): Promise<string> {
     if (!this.fallbackPasswordHashPromise) {
-      this.fallbackPasswordHashPromise = argon2.hash(randomUUID(), this.argon2Options);
+      this.fallbackPasswordHashPromise = argon2.hash(
+        randomUUID(),
+        this.argon2Options,
+      );
     }
 
     return this.fallbackPasswordHashPromise;
@@ -209,11 +221,15 @@ export class AuthService {
   }
 
   private isInactive(user: User): boolean {
-    return 'isActive' in user ? (user as unknown as { isActive?: boolean }).isActive === false : false;
+    return 'isActive' in user
+      ? (user as unknown as { isActive?: boolean }).isActive === false
+      : false;
   }
 
   private isBanned(user: User): boolean {
-    return 'isBanned' in user ? (user as unknown as { isBanned?: boolean }).isBanned === true : false;
+    return 'isBanned' in user
+      ? (user as unknown as { isBanned?: boolean }).isBanned === true
+      : false;
   }
 
   private resolveRoles(user: User): string[] {

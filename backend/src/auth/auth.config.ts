@@ -38,7 +38,10 @@ export class AuthConfigService {
   readonly jwtAudience: string;
   readonly lockDurationsSeconds: readonly number[];
   readonly lockCounterTtlSeconds: number = LOCK_COUNT_TTL_SECONDS;
-  readonly unauthorizedDelayRangeMs: UnauthorizedDelayRange = { min: 120, max: 180 };
+  readonly unauthorizedDelayRangeMs: UnauthorizedDelayRange = {
+    min: 120,
+    max: 180,
+  };
 
   constructor() {
     this.env = process.env;
@@ -93,10 +96,15 @@ export class AuthConfigService {
       throw new Error(`${variable} is required but was not provided`);
     }
 
-    return value.includes('\\n') ? value.replace(/\\n/g, '\n').trim() : value.trim();
+    return value.includes('\\n')
+      ? value.replace(/\\n/g, '\n').trim()
+      : value.trim();
   }
 
-  private parseDuration(value: string | undefined, fallbackSeconds: number): number {
+  private parseDuration(
+    value: string | undefined,
+    fallbackSeconds: number,
+  ): number {
     if (!value) {
       return fallbackSeconds;
     }
@@ -106,7 +114,9 @@ export class AuthConfigService {
     const match = durationPattern.exec(trimmed);
 
     if (!match) {
-      this.logger.warn(`Invalid duration value "${value}", falling back to ${fallbackSeconds}s`);
+      this.logger.warn(
+        `Invalid duration value "${value}", falling back to ${fallbackSeconds}s`,
+      );
       return fallbackSeconds;
     }
 
@@ -124,7 +134,9 @@ export class AuthConfigService {
       case undefined:
         return amount;
       default:
-        this.logger.warn(`Unsupported duration unit "${unit}", using fallback ${fallbackSeconds}s`);
+        this.logger.warn(
+          `Unsupported duration unit "${unit}", using fallback ${fallbackSeconds}s`,
+        );
         return fallbackSeconds;
     }
   }
@@ -136,7 +148,9 @@ export class AuthConfigService {
 
     const parsed = Number.parseInt(value, 10);
     if (Number.isNaN(parsed) || parsed <= 0) {
-      this.logger.warn(`Invalid integer value "${value}", using fallback ${fallback}`);
+      this.logger.warn(
+        `Invalid integer value "${value}", using fallback ${fallback}`,
+      );
       return fallback;
     }
 
