@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -55,6 +55,7 @@ export default function SignUpPage() {
         // Redirection après inscription réussie
         router.push("/login")
       } else {
+        alert(data.error || "Erreur lors de l&apos;inscription")
         if (response.status === 409) {
           setError("Un compte avec cet email existe déjà")
         } else {
@@ -138,7 +139,7 @@ export default function SignUpPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Inscription..." : "S'inscrire"}
+              {isLoading ? "Inscription..." : "S&apos;inscrire"}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
