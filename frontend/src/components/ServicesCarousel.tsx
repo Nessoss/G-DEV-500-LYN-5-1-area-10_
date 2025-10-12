@@ -3,31 +3,28 @@
 import React, { useMemo, useState, useEffect } from "react"
 
 const services = [
-  { emoji: "📧", name: "Gmail" },
-  { emoji: "📮", name: "Outlook" },
-  { emoji: "🐙", name: "GitHub" },
-  { emoji: "💬", name: "Discord" },
-  { emoji: "💼", name: "Slack" },
-  { emoji: "📝", name: "Notion" },
-  { emoji: "🕐", name: "Horloge" },
-  { emoji: "🏃", name: "Strava" },
-  { emoji: "🎬", name: "Letterboxd" },
-  { emoji: "📦", name: "Dropbox" },
-  { emoji: "☁️", name: "OneDrive" },
-  { emoji: "⏱️", name: "Timer" },
-  { emoji: "🎵", name: "Spotify" },
-  { emoji: "🌤️", name: "Météo" },
-  { emoji: "📋", name: "Trello" },
+  { logo: "/images/gmail.svg", name: "Gmail", color: "#EA4335" },
+  { logo: "/images/github.svg", name: "GitHub", color: "#181717" },
+  { logo: "/images/discord.svg", name: "Discord", color: "#5865F2" },
+  { logo: "/images/slack.svg", name: "Slack", color: "#4A154B" },
+  { logo: "/images/notion.svg", name: "Notion", color: "#000000" },
+  { logo: "/images/strava.svg", name: "Strava", color: "#FC4C02" },
+  { logo: "/images/letterboxd.svg", name: "Letterboxd", color: "#00D735" },
+  { logo: "/images/dropbox.svg", name: "Dropbox", color: "#0061FF" },
+  { logo: null, name: "Timer", color: "#6B7280", emoji: "⏱️" },
+  { logo: "/images/spotify.svg", name: "Spotify", color: "#1DB954" },
+  { logo: "/images/accuweather.svg", name: "Météo", color: "#F05514" },
+  { logo: "/images/trello.svg", name: "Trello", color: "#0052CC" },
 ]
 
-const SERVICE_CARD_W = 140  // largeur fixe d'une carte
-const SERVICE_CARD_H = 120  // hauteur fixe d'une carte
-const GAP_PX = 16          // espacement horizontal
-const SPEED = 50           // px/s (vitesse du défilement)
+const SERVICE_CARD_W = 140
+const SERVICE_CARD_H = 120
+const GAP_PX = 16
+const SPEED = 50
 
 export default function ServicesCarousel() {
   const [mounted, setMounted] = useState(false)
-  const [vw, setVw] = useState<number>(1200) // Valeur par défaut fixe
+  const [vw, setVw] = useState<number>(1200)
 
   useEffect(() => {
     setMounted(true)
@@ -39,7 +36,6 @@ export default function ServicesCarousel() {
   }, [])
 
   const base = useMemo(() => {
-    // Utiliser une valeur fixe pour le SSR, puis la vraie valeur côté client
     const currentVw = mounted ? vw : 1200
     const unit = SERVICE_CARD_W + GAP_PX
     const minCount = Math.max(1, Math.ceil(currentVw / unit) + 2)
@@ -81,7 +77,31 @@ export default function ServicesCarousel() {
                 {base.map((service, i) => (
                   <li key={`t1-${i}`} className="services-marquee__item">
                     <div className="service-card">
-                      <div className="service-emoji">{service.emoji}</div>
+                      <div 
+                        className="service-logo"
+                        style={{ 
+                          backgroundColor: `${service.color}15`,
+                        }}
+                      >
+                        {service.emoji ? (
+                          <span className="service-emoji">{service.emoji}</span>
+                        ) : service.logo && (
+                          <div 
+                            className="service-logo-colored"
+                            style={{
+                              WebkitMaskImage: `url(${service.logo})`,
+                              maskImage: `url(${service.logo})`,
+                              WebkitMaskSize: 'contain',
+                              maskSize: 'contain',
+                              WebkitMaskRepeat: 'no-repeat',
+                              maskRepeat: 'no-repeat',
+                              WebkitMaskPosition: 'center',
+                              maskPosition: 'center',
+                              backgroundColor: service.color,
+                            }}
+                          />
+                        )}
+                      </div>
                       <span className="service-name">{service.name}</span>
                     </div>
                   </li>
@@ -101,7 +121,31 @@ export default function ServicesCarousel() {
                 {base.map((service, i) => (
                   <li key={`t2-${i}`} className="services-marquee__item">
                     <div className="service-card">
-                      <div className="service-emoji">{service.emoji}</div>
+                      <div 
+                        className="service-logo"
+                        style={{ 
+                          backgroundColor: `${service.color}15`,
+                        }}
+                      >
+                        {service.emoji ? (
+                          <span className="service-emoji">{service.emoji}</span>
+                        ) : service.logo && (
+                          <div 
+                            className="service-logo-colored"
+                            style={{
+                              WebkitMaskImage: `url(${service.logo})`,
+                              maskImage: `url(${service.logo})`,
+                              WebkitMaskSize: 'contain',
+                              maskSize: 'contain',
+                              WebkitMaskRepeat: 'no-repeat',
+                              maskRepeat: 'no-repeat',
+                              WebkitMaskPosition: 'center',
+                              maskPosition: 'center',
+                              backgroundColor: service.color,
+                            }}
+                          />
+                        )}
+                      </div>
                       <span className="service-name">{service.name}</span>
                     </div>
                   </li>
@@ -109,12 +153,33 @@ export default function ServicesCarousel() {
               </ul>
             </>
           ) : (
-            /* Fallback pendant l'hydratation */
             <div className="flex justify-center items-center overflow-hidden" style={{ height: `${SERVICE_CARD_H + 40}px` }}>
               <div className="flex gap-4 overflow-hidden">
                 {services.slice(0, 6).map((service, i) => (
                   <div key={i} className="service-card flex-shrink-0">
-                    <div className="service-emoji">{service.emoji}</div>
+                    <div 
+                      className="service-logo"
+                      style={{ backgroundColor: `${service.color}15` }}
+                    >
+                      {service.emoji ? (
+                        <span className="service-emoji">{service.emoji}</span>
+                      ) : service.logo && (
+                        <div 
+                          className="service-logo-colored"
+                          style={{
+                            WebkitMaskImage: `url(${service.logo})`,
+                            maskImage: `url(${service.logo})`,
+                            WebkitMaskSize: 'contain',
+                            maskSize: 'contain',
+                            WebkitMaskRepeat: 'no-repeat',
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskPosition: 'center',
+                            maskPosition: 'center',
+                            backgroundColor: service.color,
+                          }}
+                        />
+                      )}
+                    </div>
                     <span className="service-name">{service.name}</span>
                   </div>
                 ))}
@@ -124,7 +189,6 @@ export default function ServicesCarousel() {
         </div>
 
         <style>{`
-          /* Protection globale contre le scroll horizontal */
           body {
             overflow-x: hidden !important;
             max-width: 100vw !important;
@@ -208,10 +272,37 @@ export default function ServicesCarousel() {
             box-shadow: 0 10px 25px -5px hsl(var(--primary) / 0.2);
           }
 
+          .service-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+          }
+
+          .service-logo img {
+            display: none;
+          }
+
+          .service-logo-colored {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+          }
+
           .service-emoji {
             font-size: 2.5rem;
-            margin-bottom: 0.5rem;
             line-height: 1;
+          }
+
+          .service-card:hover .service-logo {
+            transform: scale(1.1);
           }
 
           .service-name {
@@ -240,18 +331,22 @@ export default function ServicesCarousel() {
             }
           }
 
-          /* Responsive adjustments */
           @media (max-width: 768px) {
             .service-card {
               width: 100px;
               height: 100px;
               padding: 0.75rem;
             }
-            
+
+            .service-logo {
+              width: 48px;
+              height: 48px;
+            }
+
             .service-emoji {
               font-size: 2rem;
             }
-            
+
             .service-name {
               font-size: 0.75rem;
             }
