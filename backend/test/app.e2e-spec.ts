@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
+import { ensureTestAuthEnv } from './utils/test-env';
+
+ensureTestAuthEnv();
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
