@@ -520,33 +520,6 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative overflow-hidden py-24 sm:py-32">
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Prêt à mettre en pratique ?
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-foreground/80">
-              Transformez vos lectures en actions. Créez votre première automatisation maintenant.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-6">
-              <Link href="/signup">
-                <Button size="lg" className="gap-2">
-                  Commencer maintenant
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/templates">
-                <Button size="lg" variant="outline">
-                  Voir les templates
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t relative">
         <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
