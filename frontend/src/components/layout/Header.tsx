@@ -82,10 +82,10 @@ export function Header() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Button variant="ghost" asChild>
-            <Link href="/login">Login</Link>
+            <Link href="/login">Connexion</Link>
           </Button>
           <Button asChild>
-            <Link href="/signup">Sign Up</Link>
+            <Link href="/signup">Inscription</Link>
           </Button>
         </div>
       </div>
