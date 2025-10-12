@@ -1,38 +1,49 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 
 export default function SignUpPage() {
-  const [nom, setNom] = useState("")
-  const [prenom, setPrenom] = useState("")
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
 
     if (password !== confirmPassword) {
-      alert("Les mots de passe ne correspondent pas")
+      setError("Les mots de passe ne correspondent pas")
+      return
+    }
+
+    // Validation du mot de passe selon les règles du backend
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères")
+      return
+    }
+    if (!passwordRegex.test(password)) {
+      setError("Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)")
       return
     }
 
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nom,
-          prenom,
           email,
           password,
         }),
@@ -42,13 +53,18 @@ export default function SignUpPage() {
 
       if (response.ok) {
         // Redirection après inscription réussie
-        window.location.href = "/login"
+        router.push("/login")
       } else {
         alert(data.error || "Erreur lors de l&apos;inscription")
+        if (response.status === 409) {
+          setError("Un compte avec cet email existe déjà")
+        } else {
+          setError(data.message || "Erreur lors de l'inscription")
+        }
       }
     } catch (error) {
       console.error("Erreur:", error)
-      alert("Une erreur est survenue")
+      setError("Une erreur est survenue. Veuillez réessayer.")
     } finally {
       setIsLoading(false)
     }
@@ -67,33 +83,11 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="nom" className="text-sm font-medium">
-                Nom
-              </label>
-              <Input
-                id="nom"
-                type="text"
-                placeholder="Dupont"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="prenom" className="text-sm font-medium">
-                Prénom
-              </label>
-              <Input
-                id="prenom"
-                type="text"
-                placeholder="Jean"
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-                required
-              />
-            </div>
+            {error && (
+              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+                {error}
+              </div>
+            )}
 
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
@@ -121,6 +115,9 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Min. 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -144,6 +141,13 @@ export default function SignUpPage() {
             >
               {isLoading ? "Inscription..." : "S&apos;inscrire"}
             </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Vous avez déjà un compte ?{" "}
+              <Link href="/login" className="text-primary hover:underline">
+                Se connecter
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>
