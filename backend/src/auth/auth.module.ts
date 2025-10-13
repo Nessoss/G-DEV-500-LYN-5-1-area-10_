@@ -24,13 +24,12 @@ import { RateLimitService } from './rate-limit.service';
   controllers: [AuthController],
   providers: [
     AuthService,
-    OAuth2Service,
     AuthConfigService,
     RateLimitService,
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAuthGuard,
   ],
-  exports: [AuthService, OAuth2Service, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
