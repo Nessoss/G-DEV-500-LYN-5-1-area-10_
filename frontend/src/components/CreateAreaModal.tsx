@@ -12,10 +12,37 @@ interface CreateAreaModalProps {
   onSubmit: (area: {
     name: string
     description: string
-    action: { service: string; trigger: string }
-    reaction: { service: string; action: string }
+    action: { service: string; trigger: string; config?: Record<string, any> }
+    reaction: { service: string; action: string; config?: Record<string, any> }
     isActive: boolean
   }) => void
+}
+
+// Configuration des champs requis pour chaque service
+const serviceConfigs = {
+  Weather: {
+    actionFields: {
+      "Vérifier la météo": [
+        { key: "city", label: "Ville", type: "text", placeholder: "Lyon" }
+      ],
+      "Il pleut": [
+        { key: "city", label: "Ville", type: "text", placeholder: "Lyon" }
+      ]
+    },
+    reactionFields: {}
+  },
+  Discord: {
+    actionFields: {},
+    reactionFields: {
+      "Envoyer un message": [
+        { key: "webhookUrl", label: "Webhook URL", type: "url", placeholder: "https://discord.com/api/webhooks/..." },
+        { key: "message", label: "Message", type: "text", placeholder: "Message à envoyer" }
+      ],
+      "Envoyer une alerte météo": [
+        { key: "webhookUrl", label: "Webhook URL", type: "url", placeholder: "https://discord.com/api/webhooks/..." }
+      ]
+    }
+  }
 }
 
 // Services disponibles avec leurs déclencheurs et actions
@@ -24,9 +51,13 @@ const services = {
     triggers: ["Nouvel email reçu", "Email d&apos;un expéditeur spécifique", "Email avec un mot-clé"],
     actions: ["Envoyer un email", "Marquer comme lu", "Archiver"]
   },
+  Weather: {
+    triggers: ["Vérifier la météo", "Il pleut"],
+    actions: []
+  },
   Discord: {
     triggers: ["Nouveau message dans un channel", "Mention utilisateur", "Nouveau membre"],
-    actions: ["Envoyer un message", "Créer un channel", "Bannir un utilisateur"]
+    actions: ["Envoyer un message", "Envoyer une alerte météo", "Créer un channel", "Bannir un utilisateur"]
   },
   Spotify: {
     triggers: ["Nouvelle chanson", "Playlist modifiée", "Artiste aimé"],
@@ -60,8 +91,8 @@ const generateAreaDescription = (actionService: string, actionTrigger: string, r
 
 export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalProps) {
   const [formData, setFormData] = useState({
-    action: { service: "", trigger: "" },
-    reaction: { service: "", action: "" }
+    action: { service: "", trigger: "", config: {} },
+    reaction: { service: "", action: "", config: {} }
   })
 
   // Génération automatique du nom et de la description
@@ -89,16 +120,16 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
       
       // Reset form
       setFormData({
-        action: { service: "", trigger: "" },
-        reaction: { service: "", action: "" }
+        action: { service: "", trigger: "", config: {} },
+        reaction: { service: "", action: "", config: {} }
       })
     }
   }
 
   const handleClose = () => {
     setFormData({
-      action: { service: "", trigger: "" },
-      reaction: { service: "", action: "" }
+      action: { service: "", trigger: "", config: {} },
+      reaction: { service: "", action: "", config: {} }
     })
     onClose()
   }
@@ -108,6 +139,10 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
     value: service,
     label: service
   }))
+  
+  // Debug: log services for troubleshooting
+  console.log('Available services:', Object.keys(services))
+  console.log('Service options:', serviceOptions)
 
   const triggerOptions = formData.action.service 
     ? services[formData.action.service as keyof typeof services].triggers.map(trigger => ({
@@ -165,7 +200,7 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                     value={formData.action.service}
                     onValueChange={(value: string) => setFormData({
                       ...formData,
-                      action: { service: value, trigger: "" }
+                      action: { service: value, trigger: "", config: {} }
                     })}
                     placeholder="Choisir un service..."
                   />
@@ -184,6 +219,29 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                   />
                 </div>
               </div>
+              
+              {/* Champs de configuration pour l'action */}
+              {formData.action.service === "Weather" && formData.action.trigger && (
+                <div className="space-y-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <h4 className="font-medium text-sm text-primary">Configuration</h4>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Ville</label>
+                    <input
+                      type="text"
+                      placeholder="Lyon"
+                      value={(formData.action.config as any).city || ""}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        action: {
+                          ...formData.action,
+                          config: { ...formData.action.config, city: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Flèche */}
@@ -202,7 +260,7 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                     value={formData.reaction.service}
                     onValueChange={(value: string) => setFormData({
                       ...formData,
-                      reaction: { service: value, action: "" }
+                      reaction: { service: value, action: "", config: {} }
                     })}
                     placeholder="Choisir un service..."
                   />
@@ -221,6 +279,47 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
                   />
                 </div>
               </div>
+              
+              {/* Champs de configuration pour la réaction Discord */}
+              {formData.reaction.service === "Discord" && formData.reaction.action && (
+                <div className="space-y-3 p-4 bg-secondary/5 rounded-lg border border-secondary/20">
+                  <h4 className="font-medium text-sm text-secondary">Configuration Discord</h4>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Webhook URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://discord.com/api/webhooks/..."
+                      value={(formData.reaction.config as any).webhookUrl || ""}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        reaction: {
+                          ...formData.reaction,
+                          config: { ...formData.reaction.config, webhookUrl: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                    />
+                  </div>
+                  {formData.reaction.action === "Envoyer un message" && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Message</label>
+                      <textarea
+                        placeholder="Message à envoyer"
+                        value={(formData.reaction.config as any).message || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          reaction: {
+                            ...formData.reaction,
+                            config: { ...formData.reaction.config, message: e.target.value }
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Aperçu en temps réel */}
@@ -238,6 +337,14 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
 
             {/* Boutons */}
             <div className="flex justify-between pt-4">
+              {/* Debug button - temporary */}
+              <button 
+                type="button" 
+                onClick={() => alert(JSON.stringify(Object.keys(services)))}
+                className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+              >
+                Debug Services
+              </button>
               <Button variant="outline" onClick={handleClose}>
                 Annuler
               </Button>

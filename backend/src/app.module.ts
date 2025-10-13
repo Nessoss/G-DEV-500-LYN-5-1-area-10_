@@ -8,6 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ServicesModule } from './services/services.module';
 import { AreasModule } from './areas/areas.module';
+import { WeatherModule } from './weather/weather.module';
+import { DiscordModule } from './discord/discord.module';
+import { WeatherToDiscordModule } from './weather-to-discord/weather-to-discord.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { AreasModule } from './areas/areas.module';
     UsersModule,
     ServicesModule,
     AreasModule,
+    WeatherModule,
+    DiscordModule,
+    WeatherToDiscordModule,
   ],
   controllers: [AppController],
   providers: [AppService],
