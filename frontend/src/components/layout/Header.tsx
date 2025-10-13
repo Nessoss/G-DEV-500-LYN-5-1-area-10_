@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Settings, CircleCheckIcon, CircleHelpIcon, CircleIcon } from "lucide-react";
+import { Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 import {
@@ -100,7 +100,7 @@ function Navbar() {
                 Tout ce que vous devez savoir pour maîtriser AREA.
               </ListItem>
               <ListItem href="/features" title="Fonctionnalités">
-                Découvrez toutes les fonctionnalités qui font d'AREA une plateforme facile à utiliser et complète.
+                Découvrez toutes les fonctionnalités qui font d&apos;AREA une plateforme facile à utiliser et complète.
               </ListItem>
               <ListItem href="/pricing" title="Tarifs">
                 Choisissez le plan qui correspond à vos besoins.
