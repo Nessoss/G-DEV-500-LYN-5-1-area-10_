@@ -22,8 +22,6 @@ import { AreasModule } from './areas/areas.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
-    ServicesModule,
-    AreasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

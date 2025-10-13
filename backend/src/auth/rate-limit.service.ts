@@ -95,12 +95,9 @@ export class RateLimitService implements OnModuleDestroy {
       });
 
       client.on('error', (error: unknown) => {
-        this.logger.error(
-          'Redis client error, switching to in-memory rate limit store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis client error, switching to in-memory rate limit store', {
+          error,
+        });
         this.useMemoryStore();
       });
 
@@ -112,10 +109,7 @@ export class RateLimitService implements OnModuleDestroy {
           this.redisReady = true;
         })
         .catch((error: unknown) => {
-          this.logger.error(
-            'Failed to connect to Redis, using in-memory store',
-            { error },
-          );
+          this.logger.error('Failed to connect to Redis, using in-memory store', { error });
           this.useMemoryStore();
         });
     }
@@ -132,8 +126,7 @@ export class RateLimitService implements OnModuleDestroy {
 
     const lockTtlSeconds = Math.max(lockTtl, 0);
     const attemptCount = attempts ?? 0;
-    const isRateLimited =
-      attemptCount >= this.authConfig.authRateLimitMaxAttempts;
+    const isRateLimited = attemptCount >= this.authConfig.authRateLimitMaxAttempts;
 
     return {
       isLocked: lockTtlSeconds > 0,
@@ -143,15 +136,9 @@ export class RateLimitService implements OnModuleDestroy {
     };
   }
 
-  async registerFailure(
-    email: string,
-    ipAddress: string,
-  ): Promise<FailureOutcome> {
+  async registerFailure(email: string, ipAddress: string): Promise<FailureOutcome> {
     const attemptsKey = this.getAttemptsKey(email, ipAddress);
-    const attempts = await this.incr(
-      attemptsKey,
-      this.authConfig.authRateLimitWindowSeconds,
-    );
+    const attempts = await this.incr(attemptsKey, this.authConfig.authRateLimitWindowSeconds);
 
     let rateLimited = false;
     let lockDurationSeconds: number | null = null;
@@ -185,20 +172,13 @@ export class RateLimitService implements OnModuleDestroy {
     }
   }
 
-  private async applyProgressiveLock(
-    email: string,
-    ipAddress: string,
-  ): Promise<number> {
+  private async applyProgressiveLock(email: string, ipAddress: string): Promise<number> {
     const lockCounterKey = this.getLockCounterKey(email, ipAddress);
-    const currentStage = await this.incr(
-      lockCounterKey,
-      this.authConfig.lockCounterTtlSeconds,
-    );
+    const currentStage = await this.incr(lockCounterKey, this.authConfig.lockCounterTtlSeconds);
 
     const lockDurations = this.authConfig.lockDurationsSeconds;
     const index = Math.min(currentStage - 1, lockDurations.length - 1);
-    const lockDurationSeconds =
-      lockDurations[index] ?? lockDurations[lockDurations.length - 1];
+    const lockDurationSeconds = lockDurations[index] ?? lockDurations[lockDurations.length - 1];
 
     const lockKey = this.getLockKey(email, ipAddress);
     await this.set(lockKey, 1, lockDurationSeconds);
@@ -220,12 +200,9 @@ export class RateLimitService implements OnModuleDestroy {
         }
         return value;
       } catch (error) {
-        this.logger.error(
-          'Redis incr command failed, switching to in-memory store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis incr command failed, switching to in-memory store', {
+          error,
+        });
         this.useMemoryStore();
       }
     }
@@ -239,12 +216,9 @@ export class RateLimitService implements OnModuleDestroy {
         const value = await this.redisClient.get(key);
         return value ? Number.parseInt(value, 10) : null;
       } catch (error) {
-        this.logger.error(
-          'Redis get command failed, switching to in-memory store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis get command failed, switching to in-memory store', {
+          error,
+        });
         this.useMemoryStore();
       }
     }
@@ -252,11 +226,7 @@ export class RateLimitService implements OnModuleDestroy {
     return this.memoryStore.get(key);
   }
 
-  private async set(
-    key: string,
-    value: number,
-    ttlSeconds: number,
-  ): Promise<void> {
+  private async set(key: string, value: number, ttlSeconds: number): Promise<void> {
     if (this.redisReady && this.redisClient) {
       try {
         if (ttlSeconds > 0) {
@@ -266,12 +236,9 @@ export class RateLimitService implements OnModuleDestroy {
         }
         return;
       } catch (error) {
-        this.logger.error(
-          'Redis set command failed, switching to in-memory store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis set command failed, switching to in-memory store', {
+          error,
+        });
         this.useMemoryStore();
       }
     }
@@ -285,12 +252,9 @@ export class RateLimitService implements OnModuleDestroy {
         await this.redisClient.del(key);
         return;
       } catch (error) {
-        this.logger.error(
-          'Redis del command failed, switching to in-memory store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis del command failed, switching to in-memory store', {
+          error,
+        });
         this.useMemoryStore();
       }
     }
@@ -304,12 +268,9 @@ export class RateLimitService implements OnModuleDestroy {
         const ttlSeconds = await this.redisClient.ttl(key);
         return ttlSeconds;
       } catch (error) {
-        this.logger.error(
-          'Redis ttl command failed, switching to in-memory store',
-          {
-            error,
-          },
-        );
+        this.logger.error('Redis ttl command failed, switching to in-memory store', {
+          error,
+        });
         this.useMemoryStore();
       }
     }

@@ -24,7 +24,6 @@ import {
   UnauthorizedResponseDto,
 } from './dto/login-response.dto';
 import { RateLimitService } from './rate-limit.service';
-import { OAuth2LoginDto } from './dto/oauth2.dto';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
 const TOO_MANY_REQUESTS_MESSAGE = 'Too many login attempts. Try again later.';
@@ -125,29 +124,6 @@ export class AuthController {
     this.logger.log('Authentication successful', { email, userId: user.id });
 
     return this.authService.buildLoginResponse(user, tokens);
-  }
-
-  /**
-   * Login with Google OAuth2
-   * POST /auth/oauth2/google
-   */
-  @Post('oauth2/google')
-  @HttpCode(HttpStatus.OK)
-  async loginWithGoogle(
-    @Body(new ValidationPipe({ transform: true, whitelist: true }))
-    oauth2LoginDto: OAuth2LoginDto,
-  ): Promise<{
-    message: string;
-    user: Omit<User, 'passwordHash'>;
-  }> {
-    this.logger.log('Google OAuth2 login attempt');
-
-    const user = await this.oauth2Service.loginWithGoogle(oauth2LoginDto.token);
-
-    return {
-      message: 'Google OAuth2 login successful',
-      user,
-    };
   }
 
   private extractClientIp(request: Request): string {
