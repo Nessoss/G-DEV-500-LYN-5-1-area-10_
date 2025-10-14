@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    // Ensure Turbopack uses this app folder as root
+    root: __dirname,
+  },
   async rewrites() {
     return [
       {
