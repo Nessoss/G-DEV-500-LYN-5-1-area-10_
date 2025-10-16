@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useGoogleSignIn } from "@/hooks/use-google-signin"
 import { AuthApiError, loginWithEmail, loginWithGoogle } from "@/lib/auth-client"
+import { saveAuthSession } from "@/lib/auth-storage"
 
 export function LoginForm() {
   const router = useRouter()
@@ -62,13 +63,10 @@ export function LoginForm() {
 
       const response = await loginWithGoogle(token)
 
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem("auth_user", JSON.stringify(response.user))
-        } catch (storageError) {
-          console.warn("Impossible de sauvegarder l'utilisateur Google:", storageError)
-        }
-      }
+      saveAuthSession({
+        user: response.user,
+        rememberMe: true,
+      })
 
       setSuccess("Connexion Google réussie ! Redirection en cours…")
       navigateAfterSuccess()
@@ -105,16 +103,11 @@ export function LoginForm() {
     try {
       const response = await loginWithEmail({ email, password, rememberMe })
 
-      if (typeof window !== "undefined") {
-        const storage = rememberMe ? window.localStorage : window.sessionStorage
-
-        try {
-          storage.setItem("auth_access_token", response.access_token)
-          storage.setItem("auth_user", JSON.stringify(response.user))
-        } catch (storageError) {
-          console.warn("Stockage du token impossible:", storageError)
-        }
-      }
+      saveAuthSession({
+        user: response.user,
+        accessToken: response.access_token,
+        rememberMe,
+      })
 
       setSuccess("Connexion réussie ! Redirection en cours…")
       navigateAfterSuccess()

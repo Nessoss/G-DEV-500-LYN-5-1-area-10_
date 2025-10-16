@@ -26,6 +26,9 @@ import { RateLimitService } from './rate-limit.service';
     AuthService,
     AuthConfigService,
     RateLimitService,
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [OAuth2Service]
+      : []),
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtAuthGuard,

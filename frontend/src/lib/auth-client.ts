@@ -67,15 +67,6 @@ export interface LoginPayload {
   rememberMe?: boolean
 }
 
-export interface RegisterResponse {
-  message: string
-  user: {
-    id: number
-    email: string
-    createdAt?: string
-  }
-}
-
 export interface LoginResponse {
   access_token: string
   expires_in: number
@@ -85,6 +76,10 @@ export interface LoginResponse {
     email: string
     roles: string[]
   }
+}
+
+export interface RegisterResponse extends LoginResponse {
+  message: string
 }
 
 export interface GoogleLoginResponse {
@@ -106,4 +101,14 @@ export async function loginWithEmail(data: LoginPayload) {
 
 export async function loginWithGoogle(token: string) {
   return postJson<GoogleLoginResponse>("/api/auth/oauth2/google", { token })
+}
+
+export async function logout() {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+  })
+
+  if (!response.ok) {
+    await parseError(response)
+  }
 }

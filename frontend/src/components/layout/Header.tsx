@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
+import { useAuthUser } from "@/hooks/use-auth-user"
 
 const primaryNav = [
   { href: "/features", label: "Features" },
@@ -17,6 +18,14 @@ const primaryNav = [
 
 export function Header() {
   const [open, setOpen] = React.useState(false)
+  const authUser = useAuthUser()
+  const userInitial = React.useMemo(() => {
+    if (!authUser?.email) {
+      return "?"
+    }
+    const trimmed = authUser.email.trim()
+    return trimmed ? trimmed.charAt(0).toUpperCase() : "?"
+  }, [authUser])
 
   React.useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -70,12 +79,35 @@ export function Header() {
 
         <div className="ml-auto hidden items-center gap-4 md:flex">
           <ThemeToggle />
-          <Link href="/login" className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground">
-            Sign In
-          </Link>
-          <Button size="sm" asChild className="rounded-full px-5 font-semibold">
-            <Link href="/signup">Start Free</Link>
-          </Button>
+          {authUser ? (
+            <>
+              <Link
+                href="/my-profile"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-primary/10 text-sm font-semibold uppercase text-primary"
+                aria-label="Voir mon profil"
+              >
+                {userInitial}
+              </Link>
+              <Link
+                href="/logout"
+                className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+              >
+                Logout
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+              >
+                Sign In
+              </Link>
+              <Button size="sm" asChild className="rounded-full px-5 font-semibold">
+                <Link href="/signup">Start Free</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-3 md:hidden">
@@ -143,20 +175,42 @@ export function Header() {
               ))}
             </nav>
 
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/login"
-                onClick={closeMenu}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-border/40 hover:text-foreground"
-              >
-                Sign In
-              </Link>
-              <Button asChild className="rounded-full px-4 py-2 text-sm font-semibold">
-                <Link href="/signup" onClick={closeMenu}>
-                  Start Free
+            {authUser ? (
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/my-profile"
+                  onClick={closeMenu}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-border/40 hover:text-foreground"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-primary/10 text-xs font-semibold uppercase text-primary">
+                    {userInitial}
+                  </span>
+                  Mon profil
                 </Link>
-              </Button>
-            </div>
+                <Link
+                  href="/logout"
+                  onClick={closeMenu}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Se déconnecter
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/login"
+                  onClick={closeMenu}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-border/40 hover:text-foreground"
+                >
+                  Sign In
+                </Link>
+                <Button asChild className="rounded-full px-4 py-2 text-sm font-semibold">
+                  <Link href="/signup" onClick={closeMenu}>
+                    Start Free
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
