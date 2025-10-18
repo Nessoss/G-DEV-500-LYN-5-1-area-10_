@@ -24,6 +24,7 @@ import { RateLimitService } from './rate-limit.service';
   controllers: [AuthController],
   providers: [
     AuthService,
+    OAuth2Service,
     AuthConfigService,
     RateLimitService,
     JwtAccessStrategy,

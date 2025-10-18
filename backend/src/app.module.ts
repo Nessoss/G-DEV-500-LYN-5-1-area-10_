@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ServicesModule } from './services/services.module';
 import { AreasModule } from './areas/areas.module';
+import { LetterboxdModule } from './letterboxd/letterboxd.module';
 
 @Module({
   imports: [
@@ -22,6 +23,9 @@ import { AreasModule } from './areas/areas.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
+    ServicesModule,
+    AreasModule,
+    LetterboxdModule,
   ],
   controllers: [AppController],
   providers: [AppService],
