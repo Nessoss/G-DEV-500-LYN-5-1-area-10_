@@ -1,5 +1,5 @@
 const DEFAULT_LOCAL_BACKEND_URL = "http://localhost:8080";
-const DEFAULT_DOCKER_BACKEND_URL = "http://server:3000";
+const DEFAULT_DOCKER_BACKEND_URL = "http://server:8080";
 
 const BACKEND_API_URL =
   process.env.BACKEND_API_URL ??

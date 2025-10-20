@@ -10,11 +10,11 @@ interface LetterboxdRSSItem {
   pubDate?: string;
   contentSnippet?: string;
   content?: string;
-  'letterboxd:filmTitle'?: string;
-  'letterboxd:filmYear'?: string;
-  'letterboxd:memberRating'?: string;
-  'letterboxd:watchedDate'?: string;
-  'letterboxd:rewatch'?: string;
+  filmTitle?: string;
+  filmYear?: string;
+  memberRating?: string;
+  watchedDate?: string;
+  rewatch?: string;
 }
 
 export interface ParsedLetterboxdActivity {
@@ -71,17 +71,17 @@ export class LetterboxdService {
    */
   private parseActivity(item: LetterboxdRSSItem): ParsedLetterboxdActivity {
     const title = item.title || '';
-    const filmTitle = item['letterboxd:filmTitle'] || '';
-    const filmYear = item['letterboxd:filmYear']
-      ? parseInt(item['letterboxd:filmYear'], 10)
+    const filmTitle = item.filmTitle || '';
+    const filmYear = item.filmYear
+      ? parseInt(item.filmYear, 10)
       : undefined;
-    const rating = item['letterboxd:memberRating']
-      ? parseFloat(item['letterboxd:memberRating'])
+    const rating = item.memberRating
+      ? parseFloat(item.memberRating)
       : undefined;
-    const watchedDate = item['letterboxd:watchedDate']
-      ? new Date(item['letterboxd:watchedDate'])
+    const watchedDate = item.watchedDate
+      ? new Date(item.watchedDate)
       : undefined;
-    const isRewatch = item['letterboxd:rewatch'] === 'Yes';
+    const isRewatch = item.rewatch === 'Yes';
     const reviewText = item.contentSnippet || item.content || '';
 
     // Determine activity type
@@ -179,21 +179,111 @@ export class LetterboxdService {
       throw new Error('Webhook URL is required');
     }
 
-    const payload = {
-      type: activity.type,
-      film: {
-        title: activity.filmTitle,
-        year: activity.filmYear,
-        rating: activity.rating,
-        url: activity.letterboxdUrl,
-      },
-      review: config.includeReview !== false ? activity.reviewText : undefined,
-      watchedDate: activity.watchedDate,
-      activityDate: activity.activityDate,
-      isRewatch: activity.isRewatch,
-    };
+    // Check if webhook URL is for Discord
+    const isDiscordWebhook = config.webhookUrl.includes('discord') && config.webhookUrl.includes('/api/webhooks');
+
+    let payload: any;
+
+    if (isDiscordWebhook) {
+      // Format for Discord webhook with embeds
+      const stars = activity.rating ? '⭐'.repeat(Math.floor(activity.rating)) : '';
+      const halfStar = activity.rating && activity.rating % 1 !== 0 ? '½' : '';
+      const ratingText = activity.rating ? `${stars}${halfStar} (${activity.rating}/5)` : 'Pas de note';
+
+      const fields: any[] = [
+        {
+          name: '🎬 Film',
+          value: activity.filmYear
+            ? `${activity.filmTitle} (${activity.filmYear})`
+            : activity.filmTitle || 'Titre inconnu',
+          inline: false,
+        },
+        {
+          name: '⭐ Note',
+          value: ratingText,
+          inline: true,
+        },
+        {
+          name: '📅 Type',
+          value: activity.type === 'diary' ? 'Journal'
+                : activity.type === 'review' ? 'Critique'
+                : activity.type === 'watched' ? 'Vu'
+                : activity.type === 'list' ? 'Liste'
+                : activity.type === 'rating' ? 'Note'
+                : activity.type,
+          inline: true,
+        },
+      ];
+
+      if (activity.watchedDate) {
+        fields.push({
+          name: '📆 Date de visionnage',
+          value: new Date(activity.watchedDate).toLocaleDateString('fr-FR'),
+          inline: true,
+        });
+      }
+
+      if (activity.isRewatch) {
+        fields.push({
+          name: '🔁 Statut',
+          value: 'Revu',
+          inline: true,
+        });
+      }
+
+      if (config.includeReview !== false && activity.reviewText) {
+        // Limiter la critique à 1024 caractères (limite Discord)
+        const reviewPreview = activity.reviewText.length > 1024
+          ? activity.reviewText.substring(0, 1021) + '...'
+          : activity.reviewText;
+
+        fields.push({
+          name: '💬 Critique',
+          value: reviewPreview,
+          inline: false,
+        });
+      }
+
+      payload = {
+        username: 'Letterboxd Bot',
+        avatar_url: 'https://a.ltrbxd.com/logos/letterboxd-logo-h-neg-rgb.png',
+        embeds: [
+          {
+            title: `Nouvelle activité Letterboxd`,
+            url: activity.letterboxdUrl,
+            color: 0x00D735, // Letterboxd green
+            fields: fields,
+            footer: {
+              text: 'Letterboxd',
+              icon_url: 'https://a.ltrbxd.com/logos/letterboxd-logo-v-neg-rgb.png',
+            },
+            timestamp: activity.activityDate.toISOString(),
+          },
+        ],
+      };
+    } else {
+      // Default format for generic webhooks
+      payload = {
+        type: activity.type,
+        film: {
+          title: activity.filmTitle,
+          year: activity.filmYear,
+          rating: activity.rating,
+          url: activity.letterboxdUrl,
+        },
+        review: config.includeReview !== false ? activity.reviewText : undefined,
+        watchedDate: activity.watchedDate,
+        activityDate: activity.activityDate,
+        isRewatch: activity.isRewatch,
+      };
+    }
 
     try {
+      // Log payload for debugging
+      this.logger.debug(
+        `Sending webhook payload: ${JSON.stringify(payload, null, 2)}`,
+      );
+
       const response = await fetch(config.webhookUrl, {
         method: 'POST',
         headers: {
@@ -203,7 +293,8 @@ export class LetterboxdService {
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook returned status ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Webhook returned status ${response.status}: ${errorText}`);
       }
 
       this.logger.debug(
