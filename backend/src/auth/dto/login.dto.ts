@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class LoginDto {
   @Transform(({ value }) =>
@@ -13,4 +13,17 @@ export class LoginDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @MaxLength(256, { message: 'Password must not exceed 256 characters' })
   password: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return undefined;
+  })
+  @IsBoolean({ message: 'Remember me must be a boolean value' })
+  rememberMe?: boolean;
 }

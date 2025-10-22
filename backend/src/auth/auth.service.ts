@@ -39,7 +39,7 @@ export class AuthService {
     private readonly authConfig: AuthConfigService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(registerDto: RegisterDto): Promise<User> {
     const email = this.normalizeEmail(registerDto.email);
     const password = registerDto.password;
 
@@ -60,7 +60,7 @@ export class AuthService {
 
       this.logger.log(`User successfully registered`, { userId: user.id });
 
-      return this.sanitizeUser(user);
+      return user;
     } catch (error) {
       this.logger.error(`Registration failed`, { email, error });
       throw new InternalServerErrorException('Failed to register user');
@@ -142,6 +142,13 @@ export class AuthService {
 
   setRefreshTokenCookie(res: Response, refreshToken: string): void {
     res.cookie('refresh_token', refreshToken, this.authConfig.refreshCookieOptions);
+  }
+
+  clearRefreshTokenCookie(res: Response): void {
+    res.clearCookie('refresh_token', {
+      ...this.authConfig.refreshCookieOptions,
+      maxAge: 0,
+    });
   }
 
   buildLoginResponse(

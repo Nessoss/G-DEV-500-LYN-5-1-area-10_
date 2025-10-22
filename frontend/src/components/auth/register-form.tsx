@@ -14,10 +14,10 @@ import { Label } from "@/components/ui/label"
 import { useGoogleSignIn } from "@/hooks/use-google-signin"
 import {
   AuthApiError,
-  loginWithEmail,
   loginWithGoogle,
   registerWithEmail,
 } from "@/lib/auth-client"
+import { saveAuthSession } from "@/lib/auth-storage"
 
 interface FormData {
   name: string
@@ -93,13 +93,10 @@ export function RegisterForm() {
 
       const response = await loginWithGoogle(token)
 
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem("auth_user", JSON.stringify(response.user))
-        } catch (storageError) {
-          console.warn("Impossible de sauvegarder l'utilisateur Google:", storageError)
-        }
-      }
+      saveAuthSession({
+        user: response.user,
+        rememberMe: true,
+      })
 
       setSuccess("Bienvenue ! Votre compte Google est prêt. Redirection en cours…")
       navigateAfterSuccess()
@@ -144,24 +141,16 @@ export function RegisterForm() {
     setIsSubmitting(true)
 
     try {
-      await registerWithEmail({
+      const registerResponse = await registerWithEmail({
         email: formData.email,
         password: formData.password,
       })
 
-      const loginResponse = await loginWithEmail({
-        email: formData.email,
-        password: formData.password,
+      saveAuthSession({
+        user: registerResponse.user,
+        accessToken: registerResponse.access_token,
+        rememberMe: true,
       })
-
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem("auth_access_token", loginResponse.access_token)
-          window.localStorage.setItem("auth_user", JSON.stringify(loginResponse.user))
-        } catch (storageError) {
-          console.warn("Impossible de stocker les informations d'authentification:", storageError)
-        }
-      }
 
       setSuccess("Compte créé avec succès ! Nous préparons votre espace…")
       navigateAfterSuccess()

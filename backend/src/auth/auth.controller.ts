@@ -10,8 +10,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   ValidationPipe,
+  Optional,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { ApiBody, ApiOkResponse, ApiTags, ApiTooManyRequestsResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -36,7 +36,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly rateLimitService: RateLimitService,
-    private readonly oauth2Service: OAuth2Service,
+    @Optional() private readonly oauth2Service?: OAuth2Service,
   ) {}
 
   /**
@@ -48,17 +48,28 @@ export class AuthController {
   async register(
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     registerDto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<{
     message: string;
-    user: Omit<User, 'passwordHash'>;
+    access_token: string;
+    expires_in: number;
+    token_type: 'Bearer';
+    user: {
+      id: string;
+      email: string;
+      roles: string[];
+    };
   }> {
     this.logger.log(`Registration attempt for email: ${registerDto.email}`);
 
     const user = await this.authService.register(registerDto);
+    const tokens = await this.authService.generateTokens(user);
+    this.authService.setRefreshTokenCookie(response, tokens.refreshToken);
+    const loginPayload = this.authService.buildLoginResponse(user, tokens);
 
     return {
       message: 'User successfully registered',
-      user,
+      ...loginPayload,
     };
   }
 
@@ -124,6 +135,13 @@ export class AuthController {
     this.logger.log('Authentication successful', { email, userId: user.id });
 
     return this.authService.buildLoginResponse(user, tokens);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Res({ passthrough: true }) response: Response): Promise<void> {
+    this.authService.clearRefreshTokenCookie(response);
+    this.logger.log('Logout successful');
   }
 
   private extractClientIp(request: Request): string {
