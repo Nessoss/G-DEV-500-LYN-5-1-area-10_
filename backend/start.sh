@@ -14,5 +14,8 @@ npx prisma migrate deploy
 echo "Generating Prisma client..."
 npx prisma generate
 
+echo "Running database seed..."
+npx ts-node prisma/seed.ts
+
 echo "Starting NestJS application..."
-node dist/main.js
+node dist/src/main.js

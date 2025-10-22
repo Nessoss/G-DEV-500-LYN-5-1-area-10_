@@ -5,117 +5,61 @@ import { Plus, Power, PowerOff, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { CreateAreaModal } from "@/components/CreateAreaModal"
-
-interface Area {
-  id: string
-  name: string
-  description: string
-  action: {
-    service: string
-    trigger: string
-  }
-  reaction: {
-    service: string
-    action: string
-  }
-  isActive: boolean
-  createdAt: string
-}
+import { getAreas, updateAreaStatus, ApiError } from "@/lib/api"
+import type { Area } from "@/types/area"
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchAreas = async () => {
-      try {
-        // TODO: Remplacer par un appel API réel
-        // const response = await fetch('/api/areas')
-        // const data = await response.json()
-        
-        // Données de démonstration
-        const mockAreas: Area[] = [
-          {
-            id: "1",
-            name: "Gmail → Discord",
-            description: 'Quand "Nouvel email reçu" sur Gmail, alors "Envoyer un message" sur Discord',
-            action: {
-              service: "Gmail",
-              trigger: "Nouvel email reçu"
-            },
-            reaction: {
-              service: "Discord",
-              action: "Envoyer un message"
-            },
-            isActive: true,
-            createdAt: "2025-01-01"
-          },
-          {
-            id: "2",
-            name: "Spotify → Philips Hue",
-            description: 'Quand "Nouvelle chanson" sur Spotify, alors "Changer la couleur" sur Philips Hue',
-            action: {
-              service: "Spotify",
-              trigger: "Nouvelle chanson"
-            },
-            reaction: {
-              service: "Philips Hue",
-              action: "Changer la couleur"
-            },
-            isActive: false,
-            createdAt: "2025-01-02"
-          },
-          {
-            id: "3",
-            name: "YouTube → Slack",
-            description: 'Quand "Nouvelle vidéo d\'un channel" sur YouTube, alors "Envoyer un message" sur Slack',
-            action: {
-              service: "YouTube",
-              trigger: "Nouvelle vidéo d'un channel"
-            },
-            reaction: {
-              service: "Slack",
-              action: "Envoyer un message"
-            },
-            isActive: true,
-            createdAt: "2025-01-03"
-          }
-        ]
-        
-        setAreas(mockAreas)
-      } catch (error) {
-        console.error("Erreur lors du chargement des areas:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAreas()
-  }, [])
-
-  const toggleAreaStatus = async (areaId: string) => {
+  const loadAreas = async () => {
     try {
-      // TODO: Appel API pour activer/désactiver l'area
-      setAreas(prevAreas =>
-        prevAreas.map(area =>
-          area.id === areaId
-            ? { ...area, isActive: !area.isActive }
-            : area
-        )
-      )
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'area:", error)
+      setLoading(true)
+      setError(null)
+      const response = await getAreas()
+      setAreas(response.areas)
+    } catch (err) {
+      console.error("Erreur lors du chargement des areas:", err)
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError("Impossible de charger les areas. Veuillez réessayer.")
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleCreateArea = (newArea: Omit<Area, 'id' | 'createdAt'>) => {
-    const area: Area = {
-      ...newArea,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  useEffect(() => {
+    loadAreas()
+  }, [])
+
+  const toggleAreaStatus = async (areaId: number) => {
+    const area = areas.find(a => a.id === areaId)
+    if (!area) return
+
+    try {
+      const updatedArea = await updateAreaStatus(areaId, { enabled: !area.enabled })
+      setAreas(prevAreas =>
+        prevAreas.map(a =>
+          a.id === areaId ? updatedArea : a
+        )
+      )
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour de l'area:", err)
+      if (err instanceof ApiError) {
+        alert(`Erreur: ${err.message}`)
+      } else {
+        alert("Impossible de mettre à jour l'area. Veuillez réessayer.")
+      }
     }
-    setAreas(prevAreas => [...prevAreas, area])
+  }
+
+  const handleCreateArea = async () => {
+    // Reload areas after creation
+    await loadAreas()
     setIsCreateModalOpen(false)
   }
 
@@ -127,6 +71,22 @@ export default function AreasPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-lg text-foreground/70">Chargement de vos areas...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen relative">
+        <div className="fixed inset-0 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 -z-10" />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center max-w-md">
+            <div className="mb-4 text-destructive text-6xl">⚠️</div>
+            <h2 className="text-2xl font-semibold mb-2">Erreur de chargement</h2>
+            <p className="text-foreground/70 mb-6">{error}</p>
+            <Button onClick={loadAreas}>Réessayer</Button>
           </div>
         </div>
       </div>
@@ -195,8 +155,8 @@ export default function AreasPage() {
                 <Card
                   key={area.id}
                   className={`border-2 hover-lift w-full bg-card/50 backdrop-blur ${
-                    area.isActive 
-                      ? 'hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10' 
+                    area.enabled
+                      ? 'hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10'
                       : 'hover:border-orange-400/70 hover:bg-orange-50/30 dark:hover:bg-orange-900/20'
                   }`}
                 >
@@ -210,18 +170,18 @@ export default function AreasPage() {
                           <CardTitle className="text-xl font-semibold truncate">{area.name}</CardTitle>
                           <div className="flex items-center gap-2 mt-2">
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                              area.isActive 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              area.enabled
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                             }`}>
-                              {area.isActive ? '● Actif' : '○ Inactif'}
+                              {area.enabled ? '● Actif' : '○ Inactif'}
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
                     <CardDescription className="mt-4 text-base leading-relaxed">
-                      {area.description}
+                      Quand &quot;{area.action.description}&quot; sur {area.action.service.name}, alors &quot;{area.reaction.description}&quot; sur {area.reaction.service.name}
                     </CardDescription>
                   </CardHeader>
 
@@ -235,8 +195,8 @@ export default function AreasPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-lg">{area.action.service}</p>
-                          <p className="text-foreground/70 mt-1">{area.action.trigger}</p>
+                          <p className="font-semibold text-foreground text-lg">{area.action.service.name}</p>
+                          <p className="text-foreground/70 mt-1">{area.action.description}</p>
                         </div>
                       </div>
 
@@ -253,8 +213,8 @@ export default function AreasPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-lg">{area.reaction.service}</p>
-                          <p className="text-foreground/70 mt-1">{area.reaction.action}</p>
+                          <p className="font-semibold text-foreground text-lg">{area.reaction.service.name}</p>
+                          <p className="text-foreground/70 mt-1">{area.reaction.description}</p>
                         </div>
                       </div>
                     </div>
@@ -265,12 +225,12 @@ export default function AreasPage() {
                       Créé le {new Date(area.createdAt).toLocaleDateString('fr-FR')}
                     </div>
                     <Button
-                      variant={area.isActive ? "default" : "outline"}
+                      variant={area.enabled ? "default" : "outline"}
                       size="default"
                       onClick={() => toggleAreaStatus(area.id)}
                       className="gap-2 min-w-[80px]"
                     >
-                      {area.isActive ? (
+                      {area.enabled ? (
                         <>
                           <Power className="h-4 w-4" />
                           ON

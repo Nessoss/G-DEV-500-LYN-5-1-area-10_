@@ -101,7 +101,9 @@ export async function registerWithEmail(data: RegisterPayload) {
 }
 
 export async function loginWithEmail(data: LoginPayload) {
-  return postJson<LoginResponse>("/api/auth/login", data)
+  // rememberMe is only used client-side, don't send it to backend
+  const { rememberMe, ...loginData } = data
+  return postJson<LoginResponse>("/api/auth/login", loginData)
 }
 
 export async function loginWithGoogle(token: string) {
