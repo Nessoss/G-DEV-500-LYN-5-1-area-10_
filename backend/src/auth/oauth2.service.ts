@@ -57,7 +57,7 @@ export class OAuth2Service {
    * @param token - Google OAuth2 token
    * @returns User without password hash
    */
-  async loginWithGoogle(token: string): Promise<Omit<User, 'passwordHash'>> {
+  async loginWithGoogle(token: string): Promise<User> {
     const googleProfile = await this.verifyGoogleToken(token);
     
     this.logger.log(`Google OAuth2 attempt for email: ${googleProfile.email}`);
@@ -96,7 +96,6 @@ export class OAuth2Service {
 
     this.logger.log(`Google OAuth2 login successful for user ID: ${user.id}`);
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return user;
   }
 }

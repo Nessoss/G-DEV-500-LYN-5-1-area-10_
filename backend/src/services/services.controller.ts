@@ -1,7 +1,9 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { ServicesService } from './services.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @ApiTags('services')
 @ApiBearerAuth()
@@ -54,8 +56,10 @@ export class ServicesController {
       },
     },
   })
-  async listServices() {
-    const services = await this.servicesService.findAvailable();
+  async listServices(@Req() request: Request) {
+    const user = request.user as JwtPayload;
+    const userId = parseInt(user.sub, 10);
+    const services = await this.servicesService.findAvailable(userId);
     return { services };
   }
 }

@@ -12,7 +12,14 @@ import {
   ValidationPipe,
   Optional,
 } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiTags, ApiTooManyRequestsResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiOkResponse,
+  ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { OAuth2Service } from './oauth2.service';
@@ -24,6 +31,7 @@ import {
   UnauthorizedResponseDto,
 } from './dto/login-response.dto';
 import { RateLimitService } from './rate-limit.service';
+import { GoogleOAuthDto } from './dto/google-oauth.dto';
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
 const TOO_MANY_REQUESTS_MESSAGE = 'Too many login attempts. Try again later.';
@@ -142,6 +150,29 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) response: Response): Promise<void> {
     this.authService.clearRefreshTokenCookie(response);
     this.logger.log('Logout successful');
+  }
+
+  @Post('oauth2/google')
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: GoogleOAuthDto })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiBadRequestResponse({ description: 'Google OAuth is not configured or token is invalid.' })
+  async loginWithGoogleOAuth(
+    @Body(new ValidationPipe({ whitelist: true })) body: GoogleOAuthDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginResponseDto> {
+    if (!this.oauth2Service) {
+      this.logger.error('Google OAuth attempted but not configured.');
+      throw new BadRequestException('Google OAuth is not configured.');
+    }
+
+    const user = await this.oauth2Service.loginWithGoogle(body.token);
+    const tokens = await this.authService.generateTokens(user);
+    this.authService.setRefreshTokenCookie(response, tokens.refreshToken);
+
+    this.logger.log('Google OAuth login successful', { userId: user.id });
+
+    return this.authService.buildLoginResponse(user, tokens);
   }
 
   private extractClientIp(request: Request): string {

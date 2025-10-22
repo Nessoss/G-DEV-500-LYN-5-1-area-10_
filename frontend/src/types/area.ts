@@ -32,6 +32,8 @@ export interface Service {
   id: number
   slug: string
   name: string
+  requiresConnection?: boolean
+  connected?: boolean
   actions: Action[]
   reactions: Reaction[]
 }
