@@ -12,7 +12,7 @@ export class AppController {
   }
 
   @Get('about.json')
-  getAbout(): AboutResponse {
+  async getAbout(): Promise<AboutResponse> {
     return this.appService.getAbout();
   }
 }
