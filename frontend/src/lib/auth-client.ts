@@ -82,14 +82,7 @@ export interface RegisterResponse extends LoginResponse {
   message: string
 }
 
-export interface GoogleLoginResponse {
-  message: string
-  user: {
-    id: number
-    email: string
-    createdAt?: string
-  }
-}
+export type GoogleLoginResponse = LoginResponse
 
 export async function registerWithEmail(data: RegisterPayload) {
   return postJson<RegisterResponse>("/api/auth/register", data)
@@ -97,7 +90,7 @@ export async function registerWithEmail(data: RegisterPayload) {
 
 export async function loginWithEmail(data: LoginPayload) {
   // rememberMe is only used client-side, don't send it to backend
-  const { rememberMe, ...loginData } = data
+  const { rememberMe: _rememberMe, ...loginData } = data
   return postJson<LoginResponse>("/api/auth/login", loginData)
 }
 

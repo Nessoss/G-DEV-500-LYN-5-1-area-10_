@@ -8,8 +8,8 @@ export class ServicesService {
   /**
    * Return all enabled services with their actions and reactions.
    */
-  async findAvailable() {
-    const services = await this.database.service.findMany({
+  async findAvailable(userId?: number) {
+    const servicesPromise = this.database.service.findMany({
       where: { enabled: true },
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
       include: {
@@ -22,22 +22,54 @@ export class ServicesService {
       },
     });
 
-    return services.map((service) => ({
-      id: service.id,
-      slug: service.slug,
-      name: service.name,
-      actions: service.actions.map((action) => ({
-        id: action.id,
-        key: action.key,
-        description: action.description,
-        configSchema: action.configSchema,
-      })),
-      reactions: service.reactions.map((reaction) => ({
-        id: reaction.id,
-        key: reaction.key,
-        description: reaction.description,
-        configSchema: reaction.configSchema,
-      })),
-    }));
+    const [services, providerAccounts] = await Promise.all([
+      servicesPromise,
+      userId
+        ? this.database.providerAccount.findMany({
+            where: { userId },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const connectedProviders = new Set(
+      providerAccounts.map((account) => account.provider),
+    );
+
+    return services.map((service) => {
+      const providerKey = this.mapSlugToProvider(service.slug);
+      const requiresConnection = Boolean(providerKey);
+      const isConnected =
+        !requiresConnection ||
+        (providerKey ? connectedProviders.has(providerKey) : false);
+
+      return {
+        id: service.id,
+        slug: service.slug,
+        name: service.name,
+        requiresConnection,
+        connected: isConnected,
+        actions: service.actions.map((action) => ({
+          id: action.id,
+          key: action.key,
+          description: action.description,
+          configSchema: action.configSchema,
+        })),
+        reactions: service.reactions.map((reaction) => ({
+          id: reaction.id,
+          key: reaction.key,
+          description: reaction.description,
+          configSchema: reaction.configSchema,
+        })),
+      };
+    });
+  }
+
+  private mapSlugToProvider(slug: string): string | null {
+    switch (slug) {
+      case 'github':
+        return 'github';
+      default:
+        return null;
+    }
   }
 }

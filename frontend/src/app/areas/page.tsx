@@ -1,20 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useCallback, useEffect, useState } from "react"
 import { Plus, Power, PowerOff, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { CreateAreaModal } from "@/components/CreateAreaModal"
 import { getAreas, updateAreaStatus, ApiError } from "@/lib/api"
 import type { Area } from "@/types/area"
+import { useAuthUser } from "@/hooks/use-auth-user"
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authUser = useAuthUser()
 
-  const loadAreas = async () => {
+  const loadAreas = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -30,11 +33,15 @@ export default function AreasPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    if (!authUser) {
+      setLoading(false)
+      return
+    }
     loadAreas()
-  }, [])
+  }, [authUser, loadAreas])
 
   const toggleAreaStatus = async (areaId: number) => {
     const area = areas.find(a => a.id === areaId)
@@ -61,6 +68,34 @@ export default function AreasPage() {
     // Reload areas after creation
     await loadAreas()
     setIsCreateModalOpen(false)
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen relative">
+        <div className="fixed inset-0 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 -z-10" />
+        <div className="flex items-center justify-center min-h-screen px-6">
+          <div className="text-center max-w-md space-y-6">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">
+                Connectez-vous pour gérer vos Areas
+              </h1>
+              <p className="text-foreground/70">
+                Identifiez-vous ou créez un compte afin de configurer vos automatisations personnalisées.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button asChild size="lg" className="sm:w-auto">
+                <Link href="/login">Se connecter</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="sm:w-auto">
+                <Link href="/signup">Créer un compte</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

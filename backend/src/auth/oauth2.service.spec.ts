@@ -98,12 +98,7 @@ describe('OAuth2Service', () => {
         expiresAt: null,
       });
 
-      expect(result).toEqual({
-        id: 1,
-        email: 'test@example.com',
-        createdAt: mockUser.createdAt,
-        updatedAt: mockUser.updatedAt,
-      });
+      expect(result).toBe(mockUser);
     });
 
     it('should update provider account for existing user', async () => {
@@ -132,12 +127,7 @@ describe('OAuth2Service', () => {
         expiresAt: null,
       });
 
-      expect(result).toEqual({
-        id: 1,
-        email: 'test@example.com',
-        createdAt: mockUser.createdAt,
-        updatedAt: mockUser.updatedAt,
-      });
+      expect(result).toBe(mockUser);
     });
   });
 });

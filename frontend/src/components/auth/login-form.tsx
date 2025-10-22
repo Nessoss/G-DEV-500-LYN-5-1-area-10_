@@ -65,6 +65,7 @@ export function LoginForm() {
 
       saveAuthSession({
         user: response.user,
+        accessToken: response.access_token,
         rememberMe: true,
       })
 

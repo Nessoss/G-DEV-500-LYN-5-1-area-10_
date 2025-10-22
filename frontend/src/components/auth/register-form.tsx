@@ -95,6 +95,7 @@ export function RegisterForm() {
 
       saveAuthSession({
         user: response.user,
+        accessToken: response.access_token,
         rememberMe: true,
       })
 

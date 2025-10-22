@@ -7,7 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(), // Enable cron jobs
+    ScheduleModule, // Access scheduler hooks
     DatabaseModule,
     AuthModule,
   ],

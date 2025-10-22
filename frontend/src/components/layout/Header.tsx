@@ -11,7 +11,7 @@ import { useAuthUser } from "@/hooks/use-auth-user"
 const primaryNav = [
   { href: "/features", label: "Features" },
   { href: "/areas", label: "Areas" },
-  { href: "/integrations", label: "Integrations" },
+  { href: "/connections", label: "Connexions" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
 ]

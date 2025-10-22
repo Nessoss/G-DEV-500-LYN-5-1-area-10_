@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { getServices, createArea, ApiError } from "@/lib/api"
 import type { Service, Action, Reaction } from "@/types/area"
+import { cn } from "@/lib/utils"
 
 interface CreateAreaModalProps {
   isOpen: boolean
@@ -61,6 +63,44 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
   const selectedAction = selectedActionService?.actions.find(a => a.id === formData.actionId)
   const selectedReactionService = services.find(s => s.id === formData.reactionServiceId)
   const selectedReaction = selectedReactionService?.reactions.find(r => r.id === formData.reactionId)
+  const servicesRequiringConnection = services.filter(
+    service => service.requiresConnection && !service.connected
+  )
+  const missingConnectionNames = servicesRequiringConnection.map(service => service.name).join(", ")
+  const needsPlural = servicesRequiringConnection.length > 1
+
+  const makeServiceOption = (service: Service) => ({
+    value: service.id.toString(),
+    label: service.name,
+    disabled: Boolean(service.requiresConnection && !service.connected),
+    description:
+      service.requiresConnection && !service.connected
+        ? "Connectez ce service depuis l’onglet Connexions."
+        : undefined,
+  })
+  const steps: { label: string; status: StepStatus }[] = (() => {
+    if (!formData.actionId) {
+      return [
+        { label: "Déclencheur", status: "current" as StepStatus },
+        { label: "Action", status: "upcoming" as StepStatus },
+        { label: "Aperçu", status: "upcoming" as StepStatus },
+      ]
+    }
+
+    if (!formData.reactionId) {
+      return [
+        { label: "Déclencheur", status: "done" as StepStatus },
+        { label: "Action", status: "current" as StepStatus },
+        { label: "Aperçu", status: "upcoming" as StepStatus },
+      ]
+    }
+
+    return [
+      { label: "Déclencheur", status: "done" as StepStatus },
+      { label: "Action", status: "done" as StepStatus },
+      { label: "Aperçu", status: "current" as StepStatus },
+    ]
+  })()
 
   const handleSubmit = async () => {
     if (!formData.actionId || !formData.reactionId) {
@@ -70,6 +110,16 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
 
     if (!selectedAction || !selectedReaction || !selectedActionService || !selectedReactionService) {
       setError("Sélection invalide")
+      return
+    }
+
+    if (selectedActionService.requiresConnection && !selectedActionService.connected) {
+      setError(`Connectez le service ${selectedActionService.name} avant de l'utiliser.`)
+      return
+    }
+
+    if (selectedReactionService.requiresConnection && !selectedReactionService.connected) {
+      setError(`Connectez le service ${selectedReactionService.name} avant de l'utiliser.`)
       return
     }
 
@@ -125,20 +175,14 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
   }
 
   // Generate options for dropdowns
-  const serviceOptions = services.map(service => ({
-    value: service.id.toString(),
-    label: service.name
-  }))
+  const serviceOptions = services.map(makeServiceOption)
 
   const actionOptions = selectedActionService?.actions.map(action => ({
     value: action.id.toString(),
     label: action.description || action.key
   })) || []
 
-  const reactionServiceOptions = services.map(service => ({
-    value: service.id.toString(),
-    label: service.name
-  }))
+  const reactionServiceOptions = services.map(makeServiceOption)
 
   const reactionOptions = selectedReactionService?.reactions.map(reaction => ({
     value: reaction.id.toString(),
@@ -193,6 +237,60 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
               </div>
             ) : (
               <>
+                {servicesRequiringConnection.length > 0 && (
+                  <div className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-4 text-sm text-foreground sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-primary uppercase tracking-wide">Connexion requise</p>
+                      <p className="text-foreground/80">
+                        {missingConnectionNames} {needsPlural ? "nécessitent" : "nécessite"} une connexion active.
+                        Ouvrez la page Connexions pour lier {needsPlural ? "ces services" : "ce service"} avant de les utiliser.
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="sm:shrink-0">
+                      <Link href="/connections" target="_blank" rel="noreferrer">
+                        Gérer mes connexions
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-border/60 bg-card/40 px-4 py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    {steps.map((step, index) => (
+                      <div
+                        key={step.label}
+                        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/60"
+                      >
+                        <span
+                          className={cn(
+                            "flex h-8 w-8 items-center justify-center rounded-full border text-sm transition-colors",
+                            step.status === "done" &&
+                              "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:border-emerald-400 dark:text-emerald-200",
+                            step.status === "current" &&
+                              "border-primary bg-primary/10 text-primary dark:border-primary/70",
+                            step.status === "upcoming" && "border-border text-foreground/40"
+                          )}
+                        >
+                          {index + 1}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-sm",
+                            step.status === "done" && "text-emerald-600 dark:text-emerald-200",
+                            step.status === "current" && "text-primary",
+                            step.status === "upcoming" && "text-foreground/60"
+                          )}
+                        >
+                          {step.label}
+                        </span>
+                        {index < steps.length - 1 && (
+                          <span className="mx-3 hidden h-px w-12 bg-border/60 sm:block" aria-hidden />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Section Déclencheur */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-primary">🔔 Déclencheur (QUAND)</h3>
@@ -409,3 +507,4 @@ function renderConfigFields(
     return null
   })
 }
+type StepStatus = "done" | "current" | "upcoming"

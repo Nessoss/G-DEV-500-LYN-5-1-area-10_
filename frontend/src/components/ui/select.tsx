@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 interface SelectOption {
   value: string
   label: string
+  disabled?: boolean
+  description?: string
 }
 
 interface SelectProps {
@@ -80,20 +82,34 @@ export function SelectDropdown({
                 Aucune option disponible
               </div>
             ) : (
-              options.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleSelect(option.value)}
-                  className={cn(
-                    "w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
-                    "focus:bg-accent focus:text-accent-foreground focus:outline-none",
-                    selectedValue === option.value && "bg-accent text-accent-foreground"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))
+              options.map((option) => {
+                const isSelected = selectedValue === option.value
+                const isDisabled = Boolean(option.disabled)
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => !isDisabled && handleSelect(option.value)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm transition-colors",
+                      "focus:outline-none",
+                      isDisabled
+                        ? "cursor-not-allowed text-foreground/40"
+                        : "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                      isSelected && !isDisabled && "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    <span className="flex flex-col gap-1">
+                      <span>{option.label}</span>
+                      {option.description && (
+                        <span className="text-xs text-foreground/60">{option.description}</span>
+                      )}
+                    </span>
+                  </button>
+                )
+              })
             )}
           </div>
         </>

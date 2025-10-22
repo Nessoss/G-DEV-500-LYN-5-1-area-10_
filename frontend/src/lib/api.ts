@@ -5,6 +5,7 @@ import type {
   CreateAreaPayload,
   UpdateAreaStatusPayload,
 } from "@/types/area"
+import type { ConnectionsResponse } from "@/types/connections"
 
 // Error handling
 type ErrorPayload = {
@@ -132,6 +133,48 @@ export async function updateAreaStatus(
 export async function deleteArea(areaId: number): Promise<void> {
   await fetchWithAuth<void>(`/api/areas/${areaId}`, {
     method: "DELETE",
+  })
+}
+
+/**
+ * Récupère le statut des connexions OAuth de l'utilisateur courant.
+ */
+export async function getConnections(): Promise<ConnectionsResponse> {
+  return fetchWithAuth<ConnectionsResponse>("/api/connections")
+}
+
+/**
+ * Initialise le flux OAuth GitHub et retourne l'URL d'autorisation à ouvrir.
+ */
+export async function startGithubConnection(): Promise<{
+  authorizeUrl: string
+  state: string
+}> {
+  return fetchWithAuth<{ authorizeUrl: string; state: string }>(
+    "/api/connections/github/start",
+    {
+      method: "POST",
+    }
+  )
+}
+
+/**
+ * Finalise la connexion GitHub depuis le code reçu dans le callback.
+ */
+export async function completeGithubConnection(payload: {
+  code: string
+  state: string
+}): Promise<{
+  success: boolean
+  provider: string
+  account: {
+    login: string
+    avatarUrl?: string | null
+  }
+}> {
+  return fetchWithAuth("/api/connections/github/complete", {
+    method: "POST",
+    body: JSON.stringify(payload),
   })
 }
 
