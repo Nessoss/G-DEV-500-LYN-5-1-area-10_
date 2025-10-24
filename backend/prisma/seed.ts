@@ -245,6 +245,83 @@ const serviceSeeds: ServiceSeed[] = [
       },
     ],
   },
+  {
+    slug: 'openweather',
+    name: 'OpenWeather',
+    actions: [
+      {
+        key: 'temperature_below_x',
+        description: 'Triggered when temperature is below a threshold',
+        configSchema: {
+          type: 'object',
+          required: ['city', 'threshold'],
+          properties: {
+            city: {
+              type: 'string',
+              description: 'City name (e.g., Paris, London, New York)',
+            },
+            threshold: {
+              type: 'number',
+              description: 'Temperature threshold in Celsius',
+              minimum: -50,
+              maximum: 60,
+            },
+          },
+        },
+      },
+      {
+        key: 'weather_condition_is',
+        description: 'Triggered when current weather matches a condition',
+        configSchema: {
+          type: 'object',
+          required: ['city', 'condition'],
+          properties: {
+            city: {
+              type: 'string',
+              description: 'City name (e.g., Paris, London, New York)',
+            },
+            condition: {
+              type: 'string',
+              enum: ['Clear', 'Clouds', 'Rain', 'Drizzle', 'Snow', 'Thunderstorm', 'Mist', 'Fog'],
+              description: 'Weather condition to monitor',
+            },
+          },
+        },
+      },
+    ],
+    reactions: [
+      {
+        key: 'send_webhook',
+        description: 'Send weather data to a webhook URL',
+        configSchema: {
+          type: 'object',
+          required: ['webhookUrl'],
+          properties: {
+            webhookUrl: {
+              type: 'string',
+              format: 'uri',
+              description: 'Webhook URL to send the weather data',
+            },
+          },
+        },
+      },
+      {
+        key: 'log_activity',
+        description: 'Log weather activity to console/logs',
+        configSchema: {
+          type: 'object',
+          properties: {
+            logLevel: {
+              type: 'string',
+              enum: ['info', 'debug', 'verbose'],
+              default: 'info',
+              description: 'Log level for the activity',
+            },
+          },
+        },
+      },
+    ],
+  },
 ];
 
 async function ensureService(seed: ServiceSeed): Promise<void> {
