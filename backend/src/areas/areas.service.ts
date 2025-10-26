@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import type { CreateAreaDto } from './dto/create-area.dto';
 import type { UpdateAreaStatusDto } from './dto/update-area-status.dto';
+import type { UpdateAreaDto } from './dto/update-area.dto';
 import type { AreaResponseDto } from './dto/area-response.dto';
 
 const areaIncludes = Prisma.validator<Prisma.AreaInclude>()({
@@ -96,6 +97,94 @@ export class AreasService {
     });
 
     return AreasService.mapArea(area);
+  }
+
+  async update(
+    userId: number,
+    areaId: number,
+    dto: UpdateAreaDto,
+  ): Promise<AreaResponseDto> {
+    const existing = await this.database.area.findUnique({
+      where: { id: areaId },
+      include: AreasService.areaIncludes,
+    });
+
+    if (!existing || existing.userId !== userId) {
+      throw new NotFoundException('Area not found');
+    }
+
+    let actionId = existing.actionId;
+    if (dto.actionId !== undefined && dto.actionId !== existing.actionId) {
+      const action = await this.database.action.findUnique({
+        where: { id: dto.actionId },
+        include: { service: true },
+      });
+      if (!action || !action.service.enabled) {
+        throw new BadRequestException('Invalid action');
+      }
+      actionId = action.id;
+    }
+
+    let reactionId = existing.reactionId;
+    if (dto.reactionId !== undefined && dto.reactionId !== existing.reactionId) {
+      const reaction = await this.database.reaction.findUnique({
+        where: { id: dto.reactionId },
+        include: { service: true },
+      });
+      if (!reaction || !reaction.service.enabled) {
+        throw new BadRequestException('Invalid reaction');
+      }
+      reactionId = reaction.id;
+    }
+
+    const updateData: Prisma.AreaUpdateInput = {};
+
+    if (dto.name !== undefined) {
+      updateData.name = dto.name;
+    }
+
+    if (actionId !== existing.actionId) {
+      updateData.action = {
+        connect: { id: actionId },
+      };
+      if (dto.actionConfig === undefined) {
+        updateData.actionConfig = {} as Prisma.JsonObject;
+      }
+    }
+
+    if (reactionId !== existing.reactionId) {
+      updateData.reaction = {
+        connect: { id: reactionId },
+      };
+      if (dto.reactionConfig === undefined) {
+        updateData.reactionConfig = {} as Prisma.JsonObject;
+      }
+    }
+
+    if (dto.actionConfig !== undefined) {
+      updateData.actionConfig = dto.actionConfig as Prisma.JsonObject;
+    }
+
+    if (dto.reactionConfig !== undefined) {
+      updateData.reactionConfig = dto.reactionConfig as Prisma.JsonObject;
+    }
+
+    if (dto.dedupKeyStrategy !== undefined) {
+      updateData.dedupKeyStrategy =
+        dto.dedupKeyStrategy ?? null;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return AreasService.mapArea(existing);
+    }
+
+    const updated = await this.database.area.update({
+      where: { id: areaId },
+      data: updateData,
+      include: AreasService.areaIncludes,
+    });
+
+    return AreasService.mapArea(updated);
   }
 
   async remove(userId: number, areaId: number): Promise<void> {

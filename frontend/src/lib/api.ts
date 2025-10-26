@@ -4,6 +4,7 @@ import type {
   Area,
   CreateAreaPayload,
   UpdateAreaStatusPayload,
+  UpdateAreaPayload,
 } from "@/types/area"
 import type { ConnectionsResponse } from "@/types/connections"
 
@@ -85,7 +86,21 @@ async function fetchWithAuth<T>(
     await parseError(response)
   }
 
-  return (await response.json()) as T
+  if (response.status === 204 || response.status === 205) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+
+  if (!text) {
+    return undefined as T
+  }
+
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return text as unknown as T
+  }
 }
 
 // API functions
@@ -133,6 +148,16 @@ export async function updateAreaStatus(
 export async function deleteArea(areaId: number): Promise<void> {
   await fetchWithAuth<void>(`/api/areas/${areaId}`, {
     method: "DELETE",
+  })
+}
+
+export async function updateArea(
+  areaId: number,
+  payload: UpdateAreaPayload
+): Promise<Area> {
+  return fetchWithAuth<Area>(`/api/areas/${areaId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   })
 }
 

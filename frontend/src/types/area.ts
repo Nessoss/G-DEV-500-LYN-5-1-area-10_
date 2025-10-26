@@ -82,3 +82,12 @@ export interface CreateAreaPayload {
 export interface UpdateAreaStatusPayload {
   enabled: boolean
 }
+
+export interface UpdateAreaPayload {
+  name?: string
+  actionId?: number
+  reactionId?: number
+  actionConfig?: Record<string, unknown>
+  reactionConfig?: Record<string, unknown>
+  dedupKeyStrategy?: string | null
+}
