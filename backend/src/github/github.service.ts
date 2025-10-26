@@ -99,9 +99,9 @@ export class GithubService {
   constructor(private readonly database: DatabaseService) {}
 
   /**
-   * Poll every 5 minutes for GitHub activity.
+   * Poll every 30 seconds for GitHub activity.
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async pollAllAreas(): Promise<void> {
     this.logger.log('Starting GitHub polling...');
 
@@ -288,46 +288,7 @@ export class GithubService {
           },
         });
 
-        for (const area of areas) {
-          const config = this.parseConfig(area.actionConfig);
-          if (!config) {
-            continue;
-          }
-
-          const matches = this.matchesActionCriteria(
-            activity,
-            area.action.key as GithubActionKey,
-            area.actionConfig as GithubAreaConfig,
-          );
-
-          if (!matches) {
-            continue;
-          }
-
-          try {
-            await this.executeReaction(area, activity);
-            await this.database.areaLog.create({
-              data: {
-                areaId: area.id,
-                status: AreaLogStatus.success,
-                payload: activity as any,
-              },
-            });
-          } catch (error) {
-            this.logger.error(
-              `Failed to execute reaction for area ${area.id}: ${error.message}`,
-            );
-
-            await this.database.areaLog.create({
-              data: {
-                areaId: area.id,
-                status: AreaLogStatus.failure,
-                payload: activity as any,
-                error: error.message,
-              },
-            });
-          }
-        }
+        await this.processActivityForAreas(areas, activity, serviceId);
       }
     }
   }
@@ -341,10 +302,56 @@ export class GithubService {
       case 'new_issue':
       case 'new_pull_request':
       case 'new_release':
-        // Future filters (labels, branches, etc.) can be added here.
         return true;
       default:
         return false;
+    }
+  }
+
+  private async processActivityForAreas(
+    areas: any[],
+    activity: GithubActivity,
+    serviceId: number,
+  ): Promise<void> {
+    for (const area of areas) {
+      const config = this.parseConfig(area.actionConfig);
+      if (!config) {
+        continue;
+      }
+
+      const matches = this.matchesActionCriteria(
+        activity,
+        area.action.key as GithubActionKey,
+        area.actionConfig as GithubAreaConfig,
+      );
+
+      if (!matches) {
+        continue;
+      }
+
+      try {
+        await this.executeReaction(area, activity);
+        await this.database.areaLog.create({
+          data: {
+            areaId: area.id,
+            status: AreaLogStatus.success,
+            payload: activity as any,
+          },
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to execute reaction for area ${area.id}: ${error.message}`,
+        );
+
+        await this.database.areaLog.create({
+          data: {
+            areaId: area.id,
+            status: AreaLogStatus.failure,
+            payload: activity as any,
+            error: error.message,
+          },
+        });
+      }
     }
   }
 
@@ -494,12 +501,31 @@ export class GithubService {
   }
 
   private logActivity(config: any, activity: GithubActivity) {
-    const logLevel = config?.logLevel ?? 'info';
-    const message = `GitHub ${activity.type} ${activity.number ? `#${activity.number}` : ''} in ${activity.owner}/${activity.repo}: ${activity.title}`;
+    const logLevel =
+      typeof config?.logLevel === 'string' ? config.logLevel : 'info';
+
+    const message = [
+      'GitHub reaction log_activity triggered',
+      `${activity.owner}/${activity.repo}`,
+      `${activity.type}${activity.number ? ` #${activity.number}` : ''}`,
+      `-> ${activity.title}`,
+    ].join(' - ');
 
     switch (logLevel) {
       case 'debug':
         this.logger.debug(message);
+        this.logger.debug(
+          `GitHub activity payload: ${JSON.stringify(
+            {
+              url: activity.url,
+              author: activity.author,
+              createdAt: activity.createdAt?.toISOString(),
+              extra: activity.extra,
+            },
+            null,
+            2,
+          )}`,
+        );
         break;
       case 'verbose':
         this.logger.verbose(message);

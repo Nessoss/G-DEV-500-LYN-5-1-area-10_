@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Patch,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import {
 } from '../auth/decorators/current-user.decorator';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaStatusDto } from './dto/update-area-status.dto';
+import { UpdateAreaDto } from './dto/update-area.dto';
 
 @ApiTags('areas')
 @ApiBearerAuth()
@@ -53,6 +55,15 @@ export class AreasController {
     @Body() dto: UpdateAreaStatusDto,
   ) {
     return this.areasService.updateStatus(user.id, id, dto);
+  }
+
+  @Patch(':id')
+  async updateArea(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAreaDto,
+  ) {
+    return this.areasService.update(user.id, id, dto);
   }
 
   @Delete(':id')

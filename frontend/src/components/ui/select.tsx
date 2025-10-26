@@ -72,7 +72,7 @@ export function SelectDropdown({
           {/* Overlay pour fermer le dropdown */}
           <div 
             className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
+            onMouseDown={() => setIsOpen(false)}
           />
           
           {/* Menu dropdown */}

@@ -1,31 +1,39 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { X } from "lucide-react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { ArrowRight, Layers, Settings, Sparkles, X, Zap, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { SelectDropdown } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { getServices, createArea, ApiError } from "@/lib/api"
-import type { Service, Action, Reaction } from "@/types/area"
+import { getServices, createArea, updateArea, ApiError } from "@/lib/api"
+import type { Service, Action, Reaction, Area, UpdateAreaPayload } from "@/types/area"
 import { cn } from "@/lib/utils"
 
 interface CreateAreaModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: () => void
+  mode?: "create" | "edit"
+  area?: Area | null
 }
 
-export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalProps) {
+export function CreateAreaModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  mode = "create",
+  area = null,
+}: CreateAreaModalProps) {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const makeEmptyFormState = () => ({
     actionServiceId: null as number | null,
     actionId: null as number | null,
     reactionServiceId: null as number | null,
@@ -33,6 +41,8 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
     actionConfig: {} as Record<string, unknown>,
     reactionConfig: {} as Record<string, unknown>,
   })
+  const [formData, setFormData] = useState(makeEmptyFormState)
+  const isEditing = mode === "edit" && Boolean(area)
 
   // Load services on mount
   useEffect(() => {
@@ -40,6 +50,39 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
       loadServices()
     }
   }, [isOpen])
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    if (isEditing && area && services.length > 0) {
+      setFormData({
+        actionServiceId: area.action.service.id,
+        actionId: area.action.id,
+        reactionServiceId: area.reaction.service.id,
+        reactionId: area.reaction.id,
+        actionConfig: area.actionConfig ?? {},
+        reactionConfig: area.reactionConfig ?? {},
+      })
+    } else if (mode === "create") {
+      setFormData(makeEmptyFormState())
+    }
+  }, [isOpen, isEditing, area, services, mode])
 
   const loadServices = async () => {
     try {
@@ -59,15 +102,42 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
     }
   }
 
-  const selectedActionService = services.find(s => s.id === formData.actionServiceId)
-  const selectedAction = selectedActionService?.actions.find(a => a.id === formData.actionId)
-  const selectedReactionService = services.find(s => s.id === formData.reactionServiceId)
-  const selectedReaction = selectedReactionService?.reactions.find(r => r.id === formData.reactionId)
+  const selectedActionService = services.find((s) => s.id === formData.actionServiceId)
+  const selectedAction = selectedActionService?.actions.find((a) => a.id === formData.actionId)
+  const selectedReactionService = services.find((s) => s.id === formData.reactionServiceId)
+  const selectedReaction = selectedReactionService?.reactions.find((r) => r.id === formData.reactionId)
   const servicesRequiringConnection = services.filter(
-    service => service.requiresConnection && !service.connected
+    (service) => service.requiresConnection && !service.connected,
   )
-  const missingConnectionNames = servicesRequiringConnection.map(service => service.name).join(", ")
+  const missingConnectionNames = servicesRequiringConnection.map((service) => service.name).join(", ")
   const needsPlural = servicesRequiringConnection.length > 1
+
+  const currentStep = useMemo(() => {
+    if (!formData.actionId) return 1
+    if (!formData.reactionId) return 2
+    return 3
+  }, [formData.actionId, formData.reactionId])
+
+  const steps = useMemo<StepItem[]>(
+    () => [
+      {
+        title: "Déclencheur",
+        caption: "Choisissez le service qui déclenche l’automatisation",
+        status: currentStep === 1 ? "current" : currentStep > 1 ? "complete" : "upcoming",
+      },
+      {
+        title: "Action",
+        caption: "Définissez la réaction qui suivra automatiquement",
+        status: currentStep === 2 ? "current" : currentStep > 2 ? "complete" : "upcoming",
+      },
+      {
+        title: "Aperçu",
+        caption: "Personnalisez et confirmez votre Area",
+        status: currentStep === 3 ? "current" : "upcoming",
+      },
+    ],
+    [currentStep],
+  )
 
   const makeServiceOption = (service: Service) => ({
     value: service.id.toString(),
@@ -78,29 +148,7 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
         ? "Connectez ce service depuis l’onglet Connexions."
         : undefined,
   })
-  const steps: { label: string; status: StepStatus }[] = (() => {
-    if (!formData.actionId) {
-      return [
-        { label: "Déclencheur", status: "current" as StepStatus },
-        { label: "Action", status: "upcoming" as StepStatus },
-        { label: "Aperçu", status: "upcoming" as StepStatus },
-      ]
-    }
-
-    if (!formData.reactionId) {
-      return [
-        { label: "Déclencheur", status: "done" as StepStatus },
-        { label: "Action", status: "current" as StepStatus },
-        { label: "Aperçu", status: "upcoming" as StepStatus },
-      ]
-    }
-
-    return [
-      { label: "Déclencheur", status: "done" as StepStatus },
-      { label: "Action", status: "done" as StepStatus },
-      { label: "Aperçu", status: "current" as StepStatus },
-    ]
-  })()
+  const readyToSubmit = Boolean(formData.actionId && formData.reactionId && !submitting)
 
   const handleSubmit = async () => {
     if (!formData.actionId || !formData.reactionId) {
@@ -123,38 +171,54 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
       return
     }
 
-    // Generate area name
-    const areaName = `${selectedActionService.name} → ${selectedReactionService.name}`
+    const submissionName =
+      isEditing && area
+        ? generatedName || area.name
+        : generatedName
+
+    if (!submissionName) {
+      setError("Impossible de déterminer le nom de l'area")
+      return
+    }
 
     try {
       setSubmitting(true)
       setError(null)
 
-      await createArea({
-        name: areaName,
-        actionId: formData.actionId,
-        reactionId: formData.reactionId,
-        actionConfig: formData.actionConfig,
-        reactionConfig: formData.reactionConfig,
-      })
+      if (isEditing && area) {
+        const payload: UpdateAreaPayload = {
+          name: submissionName,
+          actionId: formData.actionId,
+          reactionId: formData.reactionId,
+          actionConfig: formData.actionConfig,
+          reactionConfig: formData.reactionConfig,
+        }
+
+        if (area.dedupKeyStrategy !== null && area.dedupKeyStrategy !== undefined) {
+          payload.dedupKeyStrategy = area.dedupKeyStrategy
+        }
+
+        await updateArea(area.id, payload)
+      } else {
+        await createArea({
+          name: submissionName,
+          actionId: formData.actionId,
+          reactionId: formData.reactionId,
+          actionConfig: formData.actionConfig,
+          reactionConfig: formData.reactionConfig,
+        })
+      }
 
       // Reset form
-      setFormData({
-        actionServiceId: null,
-        actionId: null,
-        reactionServiceId: null,
-        reactionId: null,
-        actionConfig: {},
-        reactionConfig: {},
-      })
+      setFormData(makeEmptyFormState())
 
       onSubmit()
     } catch (err) {
-      console.error("Erreur lors de la création de l'area:", err)
+      console.error("Erreur lors de la sauvegarde de l'area:", err)
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError("Impossible de créer l'area. Veuillez réessayer.")
+        setError(isEditing ? "Impossible de mettre à jour l'area. Veuillez réessayer." : "Impossible de créer l'area. Veuillez réessayer.")
       }
     } finally {
       setSubmitting(false)
@@ -162,14 +226,7 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
   }
 
   const handleClose = () => {
-    setFormData({
-      actionServiceId: null,
-      actionId: null,
-      reactionServiceId: null,
-      reactionId: null,
-      actionConfig: {},
-      reactionConfig: {},
-    })
+    setFormData(makeEmptyFormState())
     setError(null)
     onClose()
   }
@@ -190,321 +247,458 @@ export function CreateAreaModal({ isOpen, onClose, onSubmit }: CreateAreaModalPr
   })) || []
 
   // Generate area name
-  const generatedName = selectedActionService && selectedReactionService
-    ? `${selectedActionService.name} → ${selectedReactionService.name}`
-    : ""
+  const generatedName = useMemo(() => {
+    if (!selectedActionService || !selectedReactionService) return ""
+    return `${selectedActionService.name} → ${selectedReactionService.name}`
+  }, [selectedActionService, selectedReactionService])
 
-  const generatedDescription = selectedAction && selectedReaction && selectedActionService && selectedReactionService
-    ? `Quand "${selectedAction.description}" sur ${selectedActionService.name}, alors "${selectedReaction.description}" sur ${selectedReactionService.name}`
-    : ""
+  const resolvedName = useMemo(() => {
+    if (isEditing && area) {
+      return generatedName || area.name
+    }
+    return generatedName
+  }, [isEditing, area, generatedName])
+
+  const generatedDescription = useMemo(() => {
+    if (!selectedAction || !selectedReaction || !selectedActionService || !selectedReactionService) {
+      return ""
+    }
+    return `Quand "${selectedAction.description}" sur ${selectedActionService.name}, alors "${selectedReaction.description}" sur ${selectedReactionService.name}`
+  }, [selectedAction, selectedReaction, selectedActionService, selectedReactionService])
+
+  const primaryActionLabel = isEditing ? "Mettre à jour l'Area" : "Créer l'Area"
+  const primaryActionLoading = isEditing ? "Mise à jour en cours…" : "Création en cours…"
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-gradient-to-br from-background/92 via-background/80 to-background/92 backdrop-blur-xl"
         onClick={handleClose}
       />
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto mx-4">
-        <Card className="border-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Créer une nouvelle Area</CardTitle>
-              <CardDescription>
-                Configurez votre automatisation
-              </CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </CardHeader>
+      <div className="relative z-10 flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background/95 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.45)]">
+        <div className="pointer-events-none absolute -top-32 right-[-10rem] h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 left-[-12rem] h-80 w-80 rounded-full bg-secondary/10 blur-3xl" />
 
-          <CardContent className="space-y-8">
+        <button
+          onClick={handleClose}
+          className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/80 text-foreground shadow-sm transition hover:bg-background"
+          aria-label="Fermer la fenêtre de création"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="relative grid flex-1 overflow-hidden md:grid-cols-[1.65fr_1fr]">
+          <div className="space-y-8 overflow-y-auto p-6 pb-8 md:p-10">
+            <header className="space-y-4">
+              <div className="flex items-start gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Sparkles className="h-6 w-6" />
+                </span>
+                <div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                    {isEditing ? "Modifier une Area" : "Composer une nouvelle Area"}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+                    {isEditing
+                      ? "Ajustez votre automatisation en mettant à jour le déclencheur, la réaction ou leurs paramètres."
+                      : "Assemblez un déclencheur et une réaction pour automatiser vos flux entre services. Nous vous guidons étape par étape."}
+                  </p>
+                </div>
+              </div>
+            </header>
+
+            <StepRail steps={steps} />
+
             {error && (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-5 py-4 text-sm text-destructive shadow-sm">
                 {error}
               </div>
             )}
 
             {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-foreground/70">Chargement des services...</p>
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-background/80 px-6 py-16 text-center shadow-inner">
+                <div className="mb-4 h-12 w-12 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
+                <p className="text-sm text-muted-foreground">Chargement des services et des actions disponibles…</p>
               </div>
             ) : (
               <>
                 {servicesRequiringConnection.length > 0 && (
-                  <div className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-4 text-sm text-foreground sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-4 rounded-2xl border border-primary/40 bg-primary/5 px-5 py-4 text-sm text-primary sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-primary uppercase tracking-wide">Connexion requise</p>
-                      <p className="text-foreground/80">
-                        {missingConnectionNames} {needsPlural ? "nécessitent" : "nécessite"} une connexion active.
-                        Ouvrez la page Connexions pour lier {needsPlural ? "ces services" : "ce service"} avant de les utiliser.
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/80">Connexion requise</p>
+                      <p className="mt-1 text-sm text-primary/90">
+                        {missingConnectionNames} {needsPlural ? "nécessitent" : "nécessite"} une autorisation active. Ouvrez la page Connexions pour lier {needsPlural ? "ces services" : "ce service"} avant de poursuivre.
                       </p>
                     </div>
-                    <Button asChild size="sm" variant="outline" className="sm:shrink-0">
+                    <Button asChild variant="outline" size="sm" className="border-primary/40 text-primary hover:bg-primary/10">
                       <Link href="/connections" target="_blank" rel="noreferrer">
-                        Gérer mes connexions
+                        Ouvrir mes connexions
                       </Link>
                     </Button>
                   </div>
                 )}
 
-                <div className="rounded-xl border border-border/60 bg-card/40 px-4 py-3">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    {steps.map((step, index) => (
-                      <div
-                        key={step.label}
-                        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/60"
-                      >
-                        <span
-                          className={cn(
-                            "flex h-8 w-8 items-center justify-center rounded-full border text-sm transition-colors",
-                            step.status === "done" &&
-                              "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:border-emerald-400 dark:text-emerald-200",
-                            step.status === "current" &&
-                              "border-primary bg-primary/10 text-primary dark:border-primary/70",
-                            step.status === "upcoming" && "border-border text-foreground/40"
-                          )}
-                        >
-                          {index + 1}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-sm",
-                            step.status === "done" && "text-emerald-600 dark:text-emerald-200",
-                            step.status === "current" && "text-primary",
-                            step.status === "upcoming" && "text-foreground/60"
-                          )}
-                        >
-                          {step.label}
-                        </span>
-                        {index < steps.length - 1 && (
-                          <span className="mx-3 hidden h-px w-12 bg-border/60 sm:block" aria-hidden />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Section Déclencheur */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-primary">🔔 Déclencheur (QUAND)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Service</label>
+                <SectionShell
+                  icon={Layers}
+                  tone="primary"
+                  title="Déclencheur"
+                  subtitle="Choisissez le service et l’évènement qui démarrera l’automatisation."
+                  active={currentStep >= 1}
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <LabeledField label="Service" required>
                       <SelectDropdown
                         options={serviceOptions}
                         value={formData.actionServiceId?.toString() || ""}
-                        onValueChange={(value: string) => setFormData({
-                          ...formData,
-                          actionServiceId: parseInt(value),
-                          actionId: null,
-                          actionConfig: {}
-                        })}
-                        placeholder="Choisir un service..."
+                        onValueChange={(value: string) =>
+                          setFormData({
+                            ...formData,
+                            actionServiceId: parseInt(value, 10),
+                            actionId: null,
+                            actionConfig: {},
+                          })
+                        }
+                        placeholder="Sélectionnez un service"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Déclencheur</label>
+                    </LabeledField>
+                    <LabeledField label="Évènement" required hint={!formData.actionServiceId ? "Choisissez d’abord un service" : undefined}>
                       <SelectDropdown
                         options={actionOptions}
                         value={formData.actionId?.toString() || ""}
-                        onValueChange={(value: string) => setFormData({
-                          ...formData,
-                          actionId: parseInt(value),
-                          actionConfig: {}
-                        })}
-                        placeholder="Choisir un déclencheur..."
+                        onValueChange={(value: string) =>
+                          setFormData({
+                            ...formData,
+                            actionId: parseInt(value, 10),
+                            actionConfig: {},
+                          })
+                        }
+                        placeholder="Quel évènement surveiller ?"
                         disabled={!formData.actionServiceId}
                       />
-                    </div>
+                    </LabeledField>
                   </div>
 
-                  {/* Configuration dynamique pour l'action */}
                   {selectedAction?.configSchema && (
-                    <div className="space-y-3 mt-4 p-4 rounded-lg bg-muted/50">
-                      <h4 className="text-sm font-semibold">Configuration</h4>
-                      {renderConfigFields(selectedAction, formData.actionConfig, (config) => {
-                        setFormData({ ...formData, actionConfig: config })
-                      })}
-                    </div>
+                    <fieldset className="mt-6 space-y-4 rounded-xl border border-primary/10 bg-primary/5 px-4 py-4">
+                      <legend className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary/70">
+                        Paramètres du déclencheur
+                      </legend>
+                      <ConfigFields
+                        actionOrReaction={selectedAction}
+                        config={formData.actionConfig}
+                        onChange={(config) => setFormData({ ...formData, actionConfig: config })}
+                      />
+                    </fieldset>
                   )}
-                </div>
+                </SectionShell>
 
-                {/* Flèche */}
-                <div className="flex justify-center">
-                  <div className="text-4xl text-foreground/60 font-bold">↓</div>
-                </div>
-
-                {/* Section Réaction */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-secondary">⚡ Action (ALORS)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Service</label>
+                <SectionShell
+                  icon={Zap}
+                  tone="secondary"
+                  title="Action"
+                  subtitle="Déterminez la réaction exécutée automatiquement."
+                  active={currentStep >= 2}
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <LabeledField label="Service" required>
                       <SelectDropdown
                         options={reactionServiceOptions}
                         value={formData.reactionServiceId?.toString() || ""}
-                        onValueChange={(value: string) => setFormData({
-                          ...formData,
-                          reactionServiceId: parseInt(value),
-                          reactionId: null,
-                          reactionConfig: {}
-                        })}
-                        placeholder="Choisir un service..."
+                        onValueChange={(value: string) =>
+                          setFormData({
+                            ...formData,
+                            reactionServiceId: parseInt(value, 10),
+                            reactionId: null,
+                            reactionConfig: {},
+                          })
+                        }
+                        placeholder="Sélectionnez un service"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Action</label>
+                    </LabeledField>
+                    <LabeledField label="Réaction" required hint={!formData.reactionServiceId ? "Choisissez d’abord un service" : undefined}>
                       <SelectDropdown
                         options={reactionOptions}
                         value={formData.reactionId?.toString() || ""}
-                        onValueChange={(value: string) => setFormData({
-                          ...formData,
-                          reactionId: parseInt(value),
-                          reactionConfig: {}
-                        })}
-                        placeholder="Choisir une action..."
+                        onValueChange={(value: string) =>
+                          setFormData({
+                            ...formData,
+                            reactionId: parseInt(value, 10),
+                            reactionConfig: {},
+                          })
+                        }
+                        placeholder="Sélectionnez une action"
                         disabled={!formData.reactionServiceId}
                       />
-                    </div>
+                    </LabeledField>
                   </div>
 
-                  {/* Configuration dynamique pour la réaction */}
                   {selectedReaction?.configSchema && (
-                    <div className="space-y-3 mt-4 p-4 rounded-lg bg-muted/50">
-                      <h4 className="text-sm font-semibold">Configuration</h4>
-                      {renderConfigFields(selectedReaction, formData.reactionConfig, (config) => {
-                        setFormData({ ...formData, reactionConfig: config })
-                      })}
-                    </div>
+                    <fieldset className="mt-6 space-y-4 rounded-xl border border-secondary/20 bg-secondary/5 px-4 py-4">
+                      <legend className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-secondary-foreground/70">
+                        Paramètres de la réaction
+                      </legend>
+                      <ConfigFields
+                        actionOrReaction={selectedReaction}
+                        config={formData.reactionConfig}
+                        onChange={(config) => setFormData({ ...formData, reactionConfig: config })}
+                      />
+                    </fieldset>
                   )}
-                </div>
+                </SectionShell>
 
-                {/* Aperçu en temps réel */}
-                {generatedName && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">📋 Aperçu</h3>
-                    <Card className="border-2 border-dashed border-primary/30">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{generatedName}</CardTitle>
-                        <CardDescription>{generatedDescription}</CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </div>
-                )}
-
-                {/* Boutons */}
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={handleClose} disabled={submitting}>
+                <footer className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto" disabled={submitting}>
                     Annuler
                   </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!formData.actionId || !formData.reactionId || submitting}
-                  >
-                    {submitting ? "Création..." : "Créer l'Area"}
+                  <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={!readyToSubmit}>
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-b-transparent" />
+                        {primaryActionLoading}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        {primaryActionLabel}
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    )}
                   </Button>
-                </div>
+                </footer>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+
+          <aside className="hidden h-full flex-col justify-between overflow-y-auto border-l border-border/60 bg-muted/30/60 p-6 md:flex">
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-border/50 bg-background/70 p-5 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Settings className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Aperçu en direct</h3>
+                    <p className="text-xs text-muted-foreground">Votre automatisation se construit au fil des choix.</p>
+                  </div>
+                </div>
+
+                <dl className="mt-5 space-y-4 text-sm">
+                  <div className="rounded-xl border border-border/40 bg-background/60 px-4 py-3">
+                    <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Déclencheur</dt>
+                    <dd className="mt-1 font-medium text-foreground">
+                      {selectedActionService ? selectedActionService.name : "Non défini"}
+                    </dd>
+                    {selectedAction && <p className="mt-1 text-xs text-muted-foreground">{selectedAction.description}</p>}
+                  </div>
+                  <div className="rounded-xl border border-border/40 bg-background/60 px-4 py-3">
+                    <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Action</dt>
+                    <dd className="mt-1 font-medium text-foreground">
+                      {selectedReactionService ? selectedReactionService.name : "Non définie"}
+                    </dd>
+                    {selectedReaction && <p className="mt-1 text-xs text-muted-foreground">{selectedReaction.description}</p>}
+                  </div>
+                </dl>
+              </div>
+
+              {resolvedName ? (
+                <Card className="border-border/40 bg-background/70">
+                  <CardContent className="space-y-3 p-5">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Résumé</p>
+                    <h4 className="text-base font-semibold text-foreground">{resolvedName}</h4>
+                    {generatedDescription && <p className="text-sm leading-6 text-muted-foreground">{generatedDescription}</p>}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border/60 bg-background/60 p-6 text-sm text-muted-foreground">
+                  Sélectionnez un déclencheur et une action pour voir apparaître un résumé détaillé.
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border/50 bg-background/70 px-5 py-4 text-xs text-muted-foreground">
+              Astuce : vous pourrez ajuster les paramètres plus tard dans la page « Areas ». Commencez petit, testez, puis affinez vos automatisations.
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   )
 }
 
-// Helper function to render config fields based on JSON schema
-function renderConfigFields(
-  actionOrReaction: Action | Reaction,
-  config: Record<string, unknown>,
+type StepStatus = "complete" | "current" | "upcoming"
+
+type StepItem = {
+  title: string
+  caption: string
+  status: StepStatus
+}
+
+function StepRail({ steps }: { steps: StepItem[] }) {
+  return (
+    <div className="rounded-2xl border border-border/50 bg-background/70 p-5 shadow-inner">
+      <ol className="grid gap-6 md:grid-cols-3">
+        {steps.map((step, index) => (
+          <li key={step.title} className="flex items-start gap-3">
+            <div
+              className={cn(
+                "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition",
+                step.status === "complete" && "border-emerald-500 bg-emerald-500/15 text-emerald-600",
+                step.status === "current" && "border-primary bg-primary/10 text-primary",
+                step.status === "upcoming" && "border-border text-muted-foreground",
+              )}
+            >
+              {index + 1}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{step.title}</p>
+              <p className="text-xs text-muted-foreground">{step.caption}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function SectionShell({
+  icon: Icon,
+  tone,
+  title,
+  subtitle,
+  children,
+  active,
+}: {
+  icon: LucideIcon
+  tone: "primary" | "secondary"
+  title: string
+  subtitle: string
+  children: ReactNode
+  active: boolean
+}) {
+  const toneClasses = tone === "primary" ? "bg-primary/5 border-primary/10" : "bg-secondary/5 border-secondary/15"
+
+  return (
+    <section
+      className={cn(
+        "rounded-2xl border px-5 py-6 shadow-sm transition",
+        toneClasses,
+        active ? "opacity-100" : "opacity-60",
+      )}
+    >
+      <header className="mb-5 flex items-start gap-3">
+        <span
+          className={cn(
+            "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
+            tone === "primary" ? "bg-primary/15 text-primary" : "bg-secondary/20 text-secondary-foreground",
+          )}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        <div>
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </header>
+      <div className="space-y-5">{children}</div>
+    </section>
+  )
+}
+
+function LabeledField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-2 text-sm font-medium text-foreground">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>{label}</span>
+        {required && <span className="text-destructive">Obligatoire</span>}
+      </div>
+      {children}
+      {hint && <p className="text-xs text-muted-foreground/70">{hint}</p>}
+    </label>
+  )
+}
+
+function ConfigFields({
+  actionOrReaction,
+  config,
+  onChange,
+}: {
+  actionOrReaction: Action | Reaction
+  config: Record<string, unknown>
   onChange: (config: Record<string, unknown>) => void
-) {
+}) {
   const schema = actionOrReaction.configSchema
   if (!schema || !schema.properties) return null
 
-  return Object.entries(schema.properties).map(([key, prop]) => {
-    const isRequired = schema.required?.includes(key) || false
-    const value = config[key] || prop.default || ""
+  return (
+    <div className="grid gap-4">
+      {Object.entries(schema.properties).map(([key, prop]) => {
+        const isRequired = schema.required?.includes(key) ?? false
+        const value = config[key] ?? prop.default ?? ""
 
-    if (prop.type === "string") {
-      if (prop.enum) {
-        // Dropdown for enum values
-        return (
-          <div key={key}>
-            <Label htmlFor={key}>
-              {prop.description || key} {isRequired && <span className="text-destructive">*</span>}
-            </Label>
-            <SelectDropdown
-              options={prop.enum.map((v: string) => ({ value: v, label: v }))}
-              value={String(value)}
-              onValueChange={(val: string) => onChange({ ...config, [key]: val })}
-              placeholder={`Choisir ${prop.description || key}...`}
-            />
-          </div>
-        )
-      }
+        if (prop.type === "string") {
+          if (prop.enum) {
+            return (
+              <LabeledField key={key} label={prop.description || key} required={isRequired}>
+                <SelectDropdown
+                  options={prop.enum.map((entry: string) => ({ value: entry, label: entry }))}
+                  value={String(value)}
+                  onValueChange={(val: string) => onChange({ ...config, [key]: val })}
+                  placeholder={`Sélectionner ${prop.description || key}`}
+                />
+              </LabeledField>
+            )
+          }
 
-      // Text input
-      return (
-        <div key={key}>
-          <Label htmlFor={key}>
-            {prop.description || key} {isRequired && <span className="text-destructive">*</span>}
-          </Label>
-          <Input
-            id={key}
-            type={prop.format === "uri" ? "url" : "text"}
-            placeholder={prop.description || key}
-            value={String(value)}
-            onChange={(e) => onChange({ ...config, [key]: e.target.value })}
-            required={isRequired}
-          />
-        </div>
-      )
-    }
+          return (
+            <LabeledField key={key} label={prop.description || key} required={isRequired}>
+              <Input
+                id={key}
+                type={prop.format === "uri" ? "url" : "text"}
+                value={String(value)}
+                placeholder={prop.description || key}
+                onChange={(event) => onChange({ ...config, [key]: event.target.value })}
+                required={isRequired}
+              />
+            </LabeledField>
+          )
+        }
 
-    if (prop.type === "number") {
-      return (
-        <div key={key}>
-          <Label htmlFor={key}>
-            {prop.description || key} {isRequired && <span className="text-destructive">*</span>}
-          </Label>
-          <Input
-            id={key}
-            type="number"
-            placeholder={prop.description || key}
-            value={Number(value) || ""}
-            onChange={(e) => onChange({ ...config, [key]: parseFloat(e.target.value) })}
-            min={prop.minimum}
-            max={prop.maximum}
-            required={isRequired}
-          />
-        </div>
-      )
-    }
+        if (prop.type === "number") {
+          return (
+            <LabeledField key={key} label={prop.description || key} required={isRequired}>
+              <Input
+                id={key}
+                type="number"
+                value={value === "" ? "" : Number(value)}
+                placeholder={prop.description || key}
+                onChange={(event) => onChange({ ...config, [key]: parseFloat(event.target.value) })}
+                min={prop.minimum}
+                max={prop.maximum}
+                required={isRequired}
+              />
+            </LabeledField>
+          )
+        }
 
-    if (prop.type === "boolean") {
-      return (
-        <div key={key} className="flex items-center gap-2">
-          <Checkbox
-            id={key}
-            checked={Boolean(value)}
-            onCheckedChange={(checked: boolean) => onChange({ ...config, [key]: Boolean(checked) })}
-          />
-          <Label htmlFor={key} className="cursor-pointer">
-            {prop.description || key}
-          </Label>
-        </div>
-      )
-    }
+        if (prop.type === "boolean") {
+          return (
+            <div key={key} className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/60 px-4 py-3">
+              <Checkbox
+                id={key}
+                checked={Boolean(value)}
+                onCheckedChange={(checked: boolean) => onChange({ ...config, [key]: Boolean(checked) })}
+              />
+              <Label htmlFor={key} className="text-sm font-medium text-foreground">
+                {prop.description || key}
+              </Label>
+            </div>
+          )
+        }
 
-    return null
-  })
+        return null
+      })}
+    </div>
+  )
 }
-type StepStatus = "done" | "current" | "upcoming"
