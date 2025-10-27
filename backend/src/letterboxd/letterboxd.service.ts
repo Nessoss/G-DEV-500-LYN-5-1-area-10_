@@ -329,9 +329,9 @@ export class LetterboxdService {
   }
 
   /**
-   * Poll all active Letterboxd areas (runs every 5 minutes)
+   * Poll all active Letterboxd areas (runs every 5 minutes) - DISABLED FOR NOW
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_5_MINUTES)
   async pollAllUserFeeds(): Promise<void> {
     this.logger.log('Starting Letterboxd RSS polling...');
 

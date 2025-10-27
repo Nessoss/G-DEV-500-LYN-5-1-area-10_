@@ -99,9 +99,9 @@ export class GithubService {
   constructor(private readonly database: DatabaseService) {}
 
   /**
-   * Poll every 5 minutes for GitHub activity.
+   * Poll every 5 minutes for GitHub activity - DISABLED FOR NOW
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_5_MINUTES)
   async pollAllAreas(): Promise<void> {
     this.logger.log('Starting GitHub polling...');
 

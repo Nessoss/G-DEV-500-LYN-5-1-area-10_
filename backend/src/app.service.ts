@@ -1,14 +1,43 @@
 import { Injectable } from '@nestjs/common';
+import { DatabaseService } from './database/database.service';
 import type { AboutResponse } from './interfaces/about.interface';
 
 @Injectable()
 export class AppService {
+  constructor(private readonly database: DatabaseService) {}
+
   getHello(): string {
     return 'Hello World!';
   }
 
-  getAbout(): AboutResponse {
+  async getAbout(): Promise<AboutResponse> {
     const currentTime = Math.floor(Date.now() / 1000);
+
+    // Fetch services dynamically from database
+    const services = await this.database.service.findMany({
+      where: { enabled: true },
+      include: {
+        actions: {
+          orderBy: { key: 'asc' },
+        },
+        reactions: {
+          orderBy: { key: 'asc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const formattedServices = services.map((service) => ({
+      name: service.slug,
+      actions: service.actions.map((action) => ({
+        name: action.key,
+        description: action.description || '',
+      })),
+      reactions: service.reactions.map((reaction) => ({
+        name: reaction.key,
+        description: reaction.description || '',
+      })),
+    }));
 
     return {
       client: {
@@ -16,7 +45,7 @@ export class AppService {
       },
       server: {
         current_time: currentTime,
-        services: [], // Structure vide initiale comme demandé dans le PRD
+        services: formattedServices,
       },
     };
   }

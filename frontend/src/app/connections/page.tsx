@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Github } from "lucide-react"
+import { Github, Music } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuthUser } from "@/hooks/use-auth-user"
-import { getConnections, startGithubConnection } from "@/lib/api"
+import { getConnections, startGithubConnection, startSpotifyConnection } from "@/lib/api"
 import type { ConnectionStatus } from "@/types/connections"
 
 type ConnectState = "idle" | "connecting"
@@ -66,10 +66,51 @@ export default function ConnectionsPage() {
     }
   }, [loadConnections])
 
+  // Handle Spotify callback parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const success = urlParams.get('success')
+    const error = urlParams.get('error')
+    
+    if (success === 'spotify_connected') {
+      setError(null)
+      void loadConnections()
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (error) {
+      let errorMessage = "Erreur lors de la connexion à Spotify"
+      switch (error) {
+        case 'spotify_auth_failed':
+          errorMessage = "L'autorisation Spotify a échoué"
+          break
+        case 'connection_failed':
+          errorMessage = "Impossible de se connecter à Spotify"
+          break
+        case 'not_authenticated':
+          errorMessage = "Vous devez être connecté pour lier Spotify"
+          break
+        default:
+          errorMessage = `Erreur Spotify: ${error}`
+      }
+      setError(errorMessage)
+      // Clear URL params
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+    
+    setConnectState("idle")
+  }, [loadConnections])
+
   const githubStatus = useMemo(
     () => connections.find((connection) => connection.provider === "github"),
     [connections]
   )
+
+  const spotifyStatus = useMemo(
+    () => connections.find((connection) => connection.provider === "spotify"),
+    [connections]
+  )
+
+  const isSpotifyConnected = spotifyStatus?.connected ?? false
 
   const handleGithubConnect = async () => {
     setError(null)
@@ -95,6 +136,20 @@ export default function ConnectionsPage() {
       } else {
         popup.focus()
       }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Une erreur inattendue est survenue."
+      setError(message)
+      setConnectState("idle")
+    }
+  }
+
+  const handleSpotifyConnect = () => {
+    setError(null)
+    setConnectState("connecting")
+    
+    try {
+      startSpotifyConnection()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Une erreur inattendue est survenue."
@@ -212,6 +267,72 @@ export default function ConnectionsPage() {
                   : isGithubConnected
                   ? "Reconnecter GitHub"
                   : "Connecter GitHub"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Spotify Card */}
+          <Card className="border-2 border-border/60 bg-card/60 backdrop-blur hover:border-primary/60 hover:bg-primary/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-600 text-white shadow-md">
+                  <Music className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">Spotify</CardTitle>
+                  <CardDescription>Automatisez vos playlists et découvrez de la musique.</CardDescription>
+                </div>
+              </div>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                  isSpotifyConnected
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                    : "bg-destructive/10 text-destructive"
+                }`}
+              >
+                {isSpotifyConnected ? "Connecté" : "Non connecté"}
+              </span>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-foreground/70 leading-relaxed">
+                Connectez votre compte Spotify pour automatiser vos playlists, recevoir des notifications 
+                sur vos nouvelles découvertes musicales, et bien plus encore.
+              </p>
+              <ul className="space-y-2 text-sm text-foreground/70">
+                <li>• Détection de nouvelles chansons likées</li>
+                <li>• Ajout automatique à des playlists</li>
+                <li>• Suivi de votre activité d&apos;écoute</li>
+              </ul>
+              {error && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-foreground/60">
+                {loading
+                  ? "Vérification de votre connexion..."
+                  : isSpotifyConnected
+                  ? spotifyStatus?.connectedAt
+                    ? `Connecté depuis le ${new Date(spotifyStatus.connectedAt).toLocaleDateString("fr-FR")}`
+                    : "Compte Spotify connecté."
+                  : "Aucun compte Spotify lié."}
+              </div>
+              <Button
+                size="lg"
+                className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleSpotifyConnect}
+                disabled={connectState === "connecting" || isSpotifyConnected}
+              >
+                <Music className="h-4 w-4" />
+                {connectState === "connecting"
+                  ? "Ouverture de la connexion..."
+                  : isSpotifyConnected
+                  ? "Spotify Connecté"
+                  : "Connecter Spotify"}
               </Button>
             </CardFooter>
           </Card>
