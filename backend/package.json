@@ -12,6 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "docs:openapi": "ts-node -r tsconfig-paths/register src/scripts/generate-openapi.ts",
     "prisma:generate": "dotenv -e ../.env -- prisma generate",
     "prisma:migrate": "dotenv -e ../.env -- prisma migrate dev",
     "prisma:migrate:local": "dotenv -e ../.env -- bash -c 'DATABASE_URL=$DATABASE_URL_LOCAL prisma migrate dev'",

@@ -12,17 +12,17 @@ export default function SupportPage() {
       icon: MessageSquare,
       color: "primary",
       availability: "Lun-Ven 9h-18h",
-      responseTime: "< 2 minutes",
+      responseTime: "Moins de 2 minutes",
       plans: ["Pro", "Business"],
       action: "Ouvrir le chat"
     },
     {
-      title: "Support email",
+      title: "Support e-mail",
       description: "Envoyez-nous vos questions détaillées", 
       icon: Mail,
       color: "secondary",
       availability: "24/7",
-      responseTime: "< 4 heures",
+      responseTime: "Moins de 4 heures",
       plans: ["Gratuit", "Pro", "Business"],
       action: "Envoyer un email"
     },
@@ -159,7 +159,7 @@ export default function SupportPage() {
     {
       title: "Discord AREA",
       description: "Chat en temps réel avec d'autres utilisateurs et notre équipe",
-      members: "1,200+ membres", 
+      members: "1 200+ membres", 
       icon: MessageSquare,
       link: "https://discord.gg/area"
     },

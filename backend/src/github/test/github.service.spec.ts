@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GithubService, GithubActionKey } from '../github.service';
 import { DatabaseService } from '../../database/database.service';
+import { DiscordService } from '../../discord/discord.service';
 
 describe('GithubService - log reaction', () => {
   let service: GithubService;
@@ -32,6 +33,12 @@ describe('GithubService - log reaction', () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: DiscordService,
+          useValue: {
+            executeReaction: jest.fn(),
+          },
         },
       ],
     }).compile();

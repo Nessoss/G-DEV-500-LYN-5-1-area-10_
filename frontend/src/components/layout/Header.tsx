@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils"
 import { useAuthUser } from "@/hooks/use-auth-user"
 
 const primaryNav = [
-  { href: "/features", label: "Features" },
-  { href: "/areas", label: "Areas" },
+  { href: "/features", label: "Fonctionnalités" },
+  { href: "/areas", label: "Automatisations" },
   { href: "/connections", label: "Connexions" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docs" },
+  { href: "/pricing", label: "Tarifs" },
+  { href: "/docs", label: "Documentation" },
 ]
 
 export function Header() {
@@ -92,7 +92,7 @@ export function Header() {
                 href="/logout"
                 className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
               >
-                Logout
+                Déconnexion
               </Link>
             </>
           ) : (
@@ -101,10 +101,10 @@ export function Header() {
                 href="/login"
                 className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
               >
-                Sign In
+                Se connecter
               </Link>
               <Button size="sm" asChild className="rounded-full px-5 font-semibold">
-                <Link href="/signup">Start Free</Link>
+                <Link href="/signup">Essayer gratuitement</Link>
               </Button>
             </>
           )}
@@ -115,14 +115,14 @@ export function Header() {
           <button
             type="button"
             aria-expanded={open}
-            aria-label="Toggle navigation"
+            aria-label="Ouvrir le menu"
             onClick={toggleMenu}
             className={cn(
               "relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-border transition-colors duration-300",
               open ? "bg-primary text-primary-foreground" : "bg-background text-foreground"
             )}
           >
-            <span className="sr-only">Toggle menu</span>
+            <span className="sr-only">Ouvrir le menu</span>
             <span
               aria-hidden
               className={cn(

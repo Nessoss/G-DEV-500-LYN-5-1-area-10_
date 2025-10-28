@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AboutResponse } from './interfaces/about.interface';
-import { DatabaseService } from './database/database.service';
+import type { AboutResponseDto } from './app/dto/about-response.dto';
 
 @Injectable()
 export class AppService {
@@ -10,7 +9,7 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async getAbout(): Promise<AboutResponse> {
+  getAbout(): AboutResponseDto {
     const currentTime = Math.floor(Date.now() / 1000);
 
     // Fetch all enabled services with their actions and reactions from database

@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AreaLogStatus } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
+import {
+  DiscordReactionContext,
+  DiscordService,
+} from '../discord/discord.service';
 
 export type GithubActionKey =
   | 'new_issue'
@@ -96,7 +100,10 @@ export class GithubService {
   private readonly apiBaseUrl = 'https://api.github.com';
   private readonly githubToken = process.env.GITHUB_TOKEN;
 
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly discordService: DiscordService,
+  ) {}
 
   /**
    * Poll every 30 seconds for GitHub activity.
@@ -357,17 +364,55 @@ export class GithubService {
 
   private async executeReaction(area: any, activity: GithubActivity) {
     const reactionConfig = area.reactionConfig || {};
+    const reactionServiceSlug = area.reaction?.service?.slug;
+
+    if (reactionServiceSlug === 'discord') {
+      const context = this.buildDiscordReactionContext(area, activity);
+      await this.discordService.executeReaction(
+        area.reaction.key,
+        reactionConfig,
+        context,
+      );
+      return;
+    }
 
     switch (area.reaction.key) {
       case 'send_webhook':
         await this.sendWebhook(reactionConfig, activity);
         break;
       case 'log_activity':
+        this.logger.warn(
+          `Reaction log_activity is deprecated. Area ${area.id} should be migrated to a supported reaction.`,
+        );
         this.logActivity(reactionConfig, activity);
         break;
       default:
         this.logger.warn(`Unknown reaction type: ${area.reaction.key}`);
     }
+  }
+
+  private buildDiscordReactionContext(
+    area: any,
+    activity: GithubActivity,
+  ): DiscordReactionContext {
+    return {
+      source: 'github',
+      areaId: area.id,
+      activity: {
+        actionKey: activity.actionKey,
+        type: activity.type,
+        owner: activity.owner,
+        repo: activity.repo,
+        repoUrl: `https://github.com/${activity.owner}/${activity.repo}`,
+        title: activity.title,
+        url: activity.url,
+        author: activity.author ?? null,
+        number: activity.number ?? null,
+        body: activity.body ?? null,
+        createdAt: activity.createdAt.toISOString(),
+      },
+      raw: activity,
+    };
   }
 
   private async sendWebhook(

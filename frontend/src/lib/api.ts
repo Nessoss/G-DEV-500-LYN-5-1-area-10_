@@ -6,7 +6,11 @@ import type {
   UpdateAreaStatusPayload,
   UpdateAreaPayload,
 } from "@/types/area"
-import type { ConnectionsResponse } from "@/types/connections"
+import type {
+  ConnectionsResponse,
+  DiscordGuildsResponse,
+  DiscordChannelsResponse,
+} from "@/types/connections"
 
 // Error handling
 type ErrorPayload = {
@@ -201,6 +205,68 @@ export async function completeGithubConnection(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   })
+}
+
+/**
+ * Initialise le flux OAuth Discord.
+ */
+export async function startDiscordConnection(): Promise<{
+  authorizeUrl: string
+  state: string
+}> {
+  return fetchWithAuth<{ authorizeUrl: string; state: string }>(
+    "/api/connections/discord/start",
+    {
+      method: "POST",
+    }
+  )
+}
+
+/**
+ * Finalise la connexion Discord après le retour OAuth.
+ */
+export async function completeDiscordConnection(payload: {
+  code: string
+  state: string
+  guildId?: string
+}): Promise<{
+  success: boolean
+  provider: string
+  account: {
+    id: string
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
+  guild?: {
+    id: string
+    name: string
+    owner: boolean
+    permissions?: string
+  }
+}> {
+  return fetchWithAuth("/api/connections/discord/complete", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Récupère les guildes (serveurs) Discord disponibles pour l'utilisateur.
+ */
+export async function getDiscordGuilds(): Promise<DiscordGuildsResponse> {
+  return fetchWithAuth<DiscordGuildsResponse>("/api/connections/discord/guilds")
+}
+
+/**
+ * Récupère les canaux Discord pour une guilde donnée.
+ */
+export async function getDiscordChannels(
+  guildId: string
+): Promise<DiscordChannelsResponse> {
+  return fetchWithAuth<DiscordChannelsResponse>(
+    `/api/connections/discord/guilds/${guildId}/channels`
+  )
 }
 
 /**

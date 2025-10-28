@@ -2,19 +2,24 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Github } from "lucide-react"
+import { Github, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuthUser } from "@/hooks/use-auth-user"
-import { getConnections, startGithubConnection } from "@/lib/api"
+import {
+  getConnections,
+  startDiscordConnection,
+  startGithubConnection
+} from "@/lib/api"
 import type { ConnectionStatus } from "@/types/connections"
 
-type ConnectState = "idle" | "connecting"
+type ConnectState = "idle" | "github" | "discord"
 
 export default function ConnectionsPage() {
   const authUser = useAuthUser()
   const [connectState, setConnectState] = useState<ConnectState>("idle")
   const [error, setError] = useState<string | null>(null)
+  const [discordError, setDiscordError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [connections, setConnections] = useState<ConnectionStatus[]>([])
 
@@ -58,6 +63,16 @@ export default function ConnectionsPage() {
         }
         setConnectState("idle")
       }
+
+      if (event.data?.type === "discord-connection:completed") {
+        void loadConnections()
+        if (event.data.success) {
+          setDiscordError(null)
+        } else if (event.data.error) {
+          setDiscordError(event.data.error)
+        }
+        setConnectState("idle")
+      }
     }
 
     window.addEventListener("message", handler)
@@ -71,9 +86,14 @@ export default function ConnectionsPage() {
     [connections]
   )
 
+  const discordStatus = useMemo(
+    () => connections.find((connection) => connection.provider === "discord"),
+    [connections]
+  )
+
   const handleGithubConnect = async () => {
     setError(null)
-    setConnectState("connecting")
+    setConnectState("github")
 
     try {
       const { authorizeUrl, state } = await startGithubConnection()
@@ -103,6 +123,43 @@ export default function ConnectionsPage() {
     }
   }
 
+  const handleDiscordConnect = async () => {
+    setDiscordError(null)
+    setConnectState("discord")
+
+    try {
+      const { authorizeUrl, state } = await startDiscordConnection()
+
+      try {
+        localStorage.setItem("discord_oauth_state", state)
+      } catch {
+        // Ignore storage errors (private mode, etc.)
+      }
+
+      const popup = window.open(
+        authorizeUrl,
+        "discord-oauth",
+        "width=600,height=720,noopener,noreferrer"
+      )
+
+      if (!popup) {
+        window.location.href = authorizeUrl
+      } else {
+        popup.focus()
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Une erreur inattendue est survenue."
+      setDiscordError(message)
+      setConnectState("idle")
+    }
+  }
+
+  const isGithubConnected = githubStatus?.connected ?? false
+  const isDiscordConnected = discordStatus?.connected ?? false
+  const githubConnectedAt = githubStatus?.connectedAt ?? null
+  const discordConnectedAt = discordStatus?.connectedAt ?? null
+
   if (!authUser) {
     return (
       <div className="min-h-screen relative">
@@ -130,8 +187,6 @@ export default function ConnectionsPage() {
       </div>
     )
   }
-
-  const isGithubConnected = githubStatus?.connected ?? false
 
   return (
     <div className="min-h-screen relative">
@@ -195,8 +250,8 @@ export default function ConnectionsPage() {
                 {loading
                   ? "Vérification de votre connexion..."
                   : isGithubConnected
-                  ? githubStatus?.connectedAt
-                    ? `Connecté depuis le ${new Date(githubStatus.connectedAt).toLocaleDateString("fr-FR")}`
+                  ? githubConnectedAt
+                    ? `Connecté depuis le ${new Date(githubConnectedAt).toLocaleDateString("fr-FR")}`
                     : "Compte GitHub connecté."
                   : "Aucun compte GitHub lié."}
               </div>
@@ -204,14 +259,83 @@ export default function ConnectionsPage() {
                 size="lg"
                 className="gap-2"
                 onClick={handleGithubConnect}
-                disabled={connectState === "connecting"}
+                disabled={connectState === "github"}
               >
                 <Github className="h-4 w-4" />
-                {connectState === "connecting"
+                {connectState === "github"
                   ? "Ouverture de la connexion..."
                   : isGithubConnected
                   ? "Reconnecter GitHub"
                   : "Connecter GitHub"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="border-2 border-border/60 bg-card/60 backdrop-blur hover:border-secondary/60 hover:bg-secondary/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500 text-white shadow-md">
+                  <MessageSquare className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">Discord</CardTitle>
+                  <CardDescription>Envoyez des messages, embeds ou réactions sur vos serveurs.</CardDescription>
+                </div>
+              </div>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                  isDiscordConnected
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                    : "bg-destructive/10 text-destructive"
+                }`}
+              >
+                {isDiscordConnected ? "Connecté" : "Non connecté"}
+              </span>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-foreground/70 leading-relaxed">
+                Autorisez AREA51 à accéder à votre compte Discord pour inviter le bot sur vos serveurs. Une fois cette
+                étape faite, choisissez le serveur et le salon directement dans la configuration de vos areas (les
+                champs `guildId` et `channelId` disposent désormais de listes déroulantes).
+              </p>
+
+              <ul className="space-y-2 text-sm text-foreground/70">
+                <li>• Invitation du bot via OAuth Discord (scopes <code>identify guilds bot</code>).</li>
+                <li>• Le statut ci-dessous indique si la connexion est active.</li>
+                <li>• Lors de la création d’une area Discord, sélectionnez le serveur et le salon voulus.</li>
+              </ul>
+
+              {discordError && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {discordError}
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-foreground/60">
+                {loading
+                  ? "Vérification de votre connexion..."
+                  : isDiscordConnected
+                  ? discordConnectedAt
+                    ? `Connecté depuis le ${new Date(discordConnectedAt).toLocaleDateString("fr-FR")}`
+                    : "Compte Discord connecté."
+                  : "Bot Discord non autorisé."}
+              </div>
+              <Button
+                size="lg"
+                variant={isDiscordConnected ? "outline" : "default"}
+                className="gap-2"
+                onClick={handleDiscordConnect}
+                disabled={connectState === "discord"}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {connectState === "discord"
+                  ? "Ouverture de la connexion..."
+                  : isDiscordConnected
+                  ? "Reconnecter Discord"
+                  : "Connecter Discord"}
               </Button>
             </CardFooter>
           </Card>

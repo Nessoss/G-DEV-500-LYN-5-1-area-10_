@@ -9,9 +9,20 @@ import { SelectDropdown } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { getServices, createArea, updateArea, ApiError } from "@/lib/api"
+import {
+  getServices,
+  createArea,
+  updateArea,
+  ApiError,
+  getDiscordGuilds,
+  getDiscordChannels,
+} from "@/lib/api"
 import type { Service, Action, Reaction, Area, UpdateAreaPayload } from "@/types/area"
+import type { DiscordChannel, DiscordGuild } from "@/types/connections"
 import { cn } from "@/lib/utils"
+
+let discordGuildCache: DiscordGuild[] | null = null
+const discordChannelCache = new Map<string, DiscordChannel[]>()
 
 interface CreateAreaModalProps {
   isOpen: boolean
@@ -619,6 +630,200 @@ function LabeledField({ label, required, hint, children }: { label: string; requ
   )
 }
 
+interface DiscordSelectFieldProps {
+  label: string
+  required: boolean
+  value: string
+  onChange: (value: string) => void
+}
+
+function DiscordGuildField({ label, required, value, onChange }: DiscordSelectFieldProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [options, setOptions] = useState(
+    () =>
+      (discordGuildCache ?? []).map((guild) => ({
+        value: guild.id,
+        label: guild.name,
+        description: guild.owner ? "Vous êtes propriétaire" : undefined,
+      }))
+  )
+
+  useEffect(() => {
+    let active = true
+
+    const fetchGuilds = async () => {
+      if (discordGuildCache) {
+        setOptions(
+          discordGuildCache.map((guild) => ({
+            value: guild.id,
+            label: guild.name,
+            description: guild.owner ? "Vous êtes propriétaire" : undefined,
+          }))
+        )
+        return
+      }
+
+      try {
+        setLoading(true)
+        const response = await getDiscordGuilds()
+        if (!active) return
+        discordGuildCache = response.guilds
+        setOptions(
+          response.guilds.map((guild) => ({
+            value: guild.id,
+            label: guild.name,
+            description: guild.owner ? "Vous êtes propriétaire" : undefined,
+          }))
+        )
+        setError(null)
+      } catch (err) {
+        console.error("Discord guild fetch failed:", err)
+        if (!active) return
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Impossible de charger vos serveurs Discord. Assurez-vous d'être connecté."
+        setError(message)
+        setOptions([])
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void fetchGuilds()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return (
+    <LabeledField label={label} required={required}>
+      <SelectDropdown
+        options={options}
+        value={value}
+        onValueChange={(val) => onChange(val)}
+        placeholder={loading ? "Chargement des serveurs…" : "Sélectionnez un serveur"}
+        disabled={loading}
+      />
+      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+      {!error && !loading && options.length === 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Aucun serveur autorisé. Invitez d&apos;abord le bot via la page Connexions.
+        </p>
+      )}
+    </LabeledField>
+  )
+}
+
+interface DiscordChannelFieldProps extends DiscordSelectFieldProps {
+  guildId?: string
+}
+
+function DiscordChannelField({ label, required, value, guildId, onChange }: DiscordChannelFieldProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [options, setOptions] = useState(() => {
+    if (guildId && discordChannelCache.has(guildId)) {
+      return (discordChannelCache.get(guildId) ?? []).map((channel) => ({
+        value: channel.id,
+        label: channel.name,
+        description: channel.categoryName || undefined,
+      }))
+    }
+    return []
+  })
+
+  useEffect(() => {
+    let active = true
+
+    const fetchChannels = async () => {
+      if (!guildId) {
+        setOptions([])
+        setError(null)
+        setLoading(false)
+        return
+      }
+
+      const cached = discordChannelCache.get(guildId)
+      if (cached) {
+        setOptions(
+          cached.map((channel) => ({
+            value: channel.id,
+            label: channel.name,
+            description: channel.categoryName || undefined,
+          }))
+        )
+        setError(null)
+        return
+      }
+
+      try {
+        setLoading(true)
+        const response = await getDiscordChannels(guildId)
+        if (!active) return
+        discordChannelCache.set(guildId, response.channels)
+        setOptions(
+          response.channels.map((channel) => ({
+            value: channel.id,
+            label: channel.name,
+            description: channel.categoryName || undefined,
+          }))
+        )
+        setError(null)
+      } catch (err) {
+        console.error("Discord channel fetch failed:", err)
+        if (!active) return
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Impossible de récupérer les salons pour ce serveur."
+        setError(message)
+        setOptions([])
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void fetchChannels()
+
+    return () => {
+      active = false
+    }
+  }, [guildId])
+
+  return (
+    <LabeledField label={label} required={required}>
+      <SelectDropdown
+        options={options}
+        value={guildId ? value : ""}
+        onValueChange={(val) => onChange(val)}
+        placeholder={
+          !guildId
+            ? "Choisissez d’abord un serveur"
+            : loading
+            ? "Chargement des salons…"
+            : options.length > 0
+            ? "Sélectionnez un salon"
+            : "Aucun salon disponible"
+        }
+        disabled={!guildId || loading}
+      />
+      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+      {!guildId && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Sélectionnez d&apos;abord un serveur pour charger ses salons textuels.
+        </p>
+      )}
+    </LabeledField>
+  )
+}
+
 function ConfigFields({
   actionOrReaction,
   config,
@@ -635,9 +840,51 @@ function ConfigFields({
     <div className="grid gap-4">
       {Object.entries(schema.properties).map(([key, prop]) => {
         const isRequired = schema.required?.includes(key) ?? false
-        const value = config[key] ?? prop.default ?? ""
+        const rawValue = config[key] ?? prop.default ?? ""
+        const value = rawValue === null || rawValue === undefined ? "" : String(rawValue)
 
         if (prop.type === "string") {
+          if (prop.format === "discord-guild") {
+            return (
+              <DiscordGuildField
+                key={key}
+                label={prop.description || key}
+                required={isRequired}
+                value={value}
+                onChange={(guildId) => {
+                  const nextConfig = { ...config, [key]: guildId }
+                  if (Object.prototype.hasOwnProperty.call(nextConfig, "channelId")) {
+                    delete (nextConfig as Record<string, unknown>).channelId
+                  }
+                  if (Object.prototype.hasOwnProperty.call(nextConfig, "channel_id")) {
+                    delete (nextConfig as Record<string, unknown>).channel_id
+                  }
+                  onChange(nextConfig)
+                }}
+              />
+            )
+          }
+
+          if (prop.format === "discord-channel") {
+            const guildIdCandidate =
+              typeof config.guildId === "string"
+                ? config.guildId
+                : typeof (config as Record<string, unknown>)["guild_id"] === "string"
+                ? String((config as Record<string, unknown>)["guild_id"])
+                : undefined
+
+            return (
+              <DiscordChannelField
+                key={key}
+                label={prop.description || key}
+                required={isRequired}
+                value={value}
+                guildId={guildIdCandidate}
+                onChange={(channelId) => onChange({ ...config, [key]: channelId })}
+              />
+            )
+          }
+
           if (prop.enum) {
             return (
               <LabeledField key={key} label={prop.description || key} required={isRequired}>

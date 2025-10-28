@@ -12,7 +12,7 @@ import { AreasModule } from './areas/areas.module';
 import { LetterboxdModule } from './letterboxd/letterboxd.module';
 import { GithubModule } from './github/github.module';
 import { ConnectionsModule } from './connections/connections.module';
-import { OpenweatherModule } from './openweather/openweather.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
@@ -33,7 +33,7 @@ import { OpenweatherModule } from './openweather/openweather.module';
     LetterboxdModule,
     GithubModule,
     ConnectionsModule,
-    OpenweatherModule,
+    DiscordModule,
   ],
   controllers: [AppController],
   providers: [AppService],

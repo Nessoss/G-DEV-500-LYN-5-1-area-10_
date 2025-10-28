@@ -44,11 +44,11 @@ export class AreasService {
     ]);
 
     if (!action || !action.service.enabled) {
-      throw new BadRequestException('Invalid action');
+      throw new BadRequestException('Action invalide');
     }
 
     if (!reaction || !reaction.service.enabled) {
-      throw new BadRequestException('Invalid reaction');
+      throw new BadRequestException('Réaction invalide');
     }
 
     const area = await this.database.area.create({
@@ -120,7 +120,7 @@ export class AreasService {
         include: { service: true },
       });
       if (!action || !action.service.enabled) {
-        throw new BadRequestException('Invalid action');
+        throw new BadRequestException('Action invalide');
       }
       actionId = action.id;
     }
@@ -132,7 +132,7 @@ export class AreasService {
         include: { service: true },
       });
       if (!reaction || !reaction.service.enabled) {
-        throw new BadRequestException('Invalid reaction');
+        throw new BadRequestException('Réaction invalide');
       }
       reactionId = reaction.id;
     }
