@@ -4,7 +4,7 @@ import type { AboutResponseDto } from './app/dto/about-response.dto';
 @Injectable()
 export class AppService {
   getHello(): string {
-    return 'Bonjour !';
+    return 'Hello World!';
   }
 
   getAbout(): AboutResponseDto {
