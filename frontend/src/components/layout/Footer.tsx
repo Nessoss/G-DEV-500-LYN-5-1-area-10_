@@ -2,11 +2,11 @@ import Image from "next/image"
 import Link from "next/link"
 
 export function Footer() {
-  const footerLinks = {
-    Product: ["Features", "Integrations", "Pricing", "Changelog", "Roadmap"],
-    Company: ["About", "Blog", "Careers", "Press", "Contact"],
-    Resources: ["Documentation", "API Reference", "Community", "Templates", "Support"],
-    Legal: ["Privacy", "Terms", "Security", "Compliance", "Cookies"],
+  const footerLinks: Record<string, string[]> = {
+    Produit: ["Fonctionnalités", "Intégrations", "Tarifs", "Journal des modifications", "Feuille de route"],
+    Entreprise: ["À propos", "Blog", "Carrières", "Presse", "Contact"],
+    Ressources: ["Documentation", "Référence API", "Communauté", "Modèles", "Support"],
+    Légal: ["Confidentialité", "Conditions", "Sécurité", "Conformité", "Cookies"],
   }
 
   return (
@@ -21,7 +21,7 @@ export function Footer() {
               <span className="text-xl font-bold text-navy dark:text-white">Area51</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              The most powerful automation platform for modern teams.
+              La plateforme d’automatisation la plus puissante pour les équipes modernes.
             </p>
           </div>
 
@@ -45,7 +45,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
-          <p>© 2025 AREA51. All rights reserved.</p>
+          <p>© 2025 AREA51. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

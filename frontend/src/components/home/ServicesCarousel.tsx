@@ -53,10 +53,10 @@ export default function ServicesCarousel() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-8">
           <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Available Services
+            Services disponibles
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Connect your favorite services with AREA
+            Connectez vos services favoris avec AREA
           </p>
         </div>
       </div>

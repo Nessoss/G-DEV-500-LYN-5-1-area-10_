@@ -43,12 +43,12 @@ export class AuthService {
     const email = this.normalizeEmail(registerDto.email);
     const password = registerDto.password;
 
-    this.logger.log(`Attempting to register user`, { email });
+    this.logger.log(`Tentative d’inscription`, { email });
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
-      this.logger.warn(`Registration failed: duplicate email`, { email });
-      throw new ConflictException('User with this email already exists');
+      this.logger.warn(`Inscription refusée : e-mail déjà utilisé`, { email });
+      throw new ConflictException('Un utilisateur existe déjà avec cet e-mail');
     }
 
     try {
@@ -58,12 +58,12 @@ export class AuthService {
         passwordHash,
       });
 
-      this.logger.log(`User successfully registered`, { userId: user.id });
+      this.logger.log(`Utilisateur inscrit avec succès`, { userId: user.id });
 
       return user;
     } catch (error) {
-      this.logger.error(`Registration failed`, { email, error });
-      throw new InternalServerErrorException('Failed to register user');
+      this.logger.error(`Échec de l’inscription`, { email, error });
+      throw new InternalServerErrorException("Impossible d’inscrire l’utilisateur");
     }
   }
 
@@ -76,19 +76,19 @@ export class AuthService {
     );
 
     if (!user || !isPasswordValid) {
-      this.logger.warn(`Authentication failed`, { email: normalizedEmail });
+      this.logger.warn(`Échec de l’authentification`, { email: normalizedEmail });
       return null;
     }
 
     if (this.isInactive(user)) {
-      this.logger.warn(`Authentication blocked: inactive account`, {
+      this.logger.warn(`Authentification bloquée : compte inactif`, {
         email: normalizedEmail,
       });
       return null;
     }
 
     if (this.isBanned(user)) {
-      this.logger.warn(`Authentication blocked: banned account`, {
+      this.logger.warn(`Authentification bloquée : compte suspendu`, {
         email: normalizedEmail,
       });
       return null;

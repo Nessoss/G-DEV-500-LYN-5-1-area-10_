@@ -12,6 +12,7 @@ import { AreasModule } from './areas/areas.module';
 import { LetterboxdModule } from './letterboxd/letterboxd.module';
 import { GithubModule } from './github/github.module';
 import { ConnectionsModule } from './connections/connections.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ConnectionsModule } from './connections/connections.module';
     LetterboxdModule,
     GithubModule,
     ConnectionsModule,
+    DiscordModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -35,74 +35,74 @@ const serviceSeeds: ServiceSeed[] = [
     actions: [
       {
         key: 'new_review',
-        description: 'Triggered when a new review is posted on Letterboxd',
+        description: 'Déclenchée lorsqu’une nouvelle critique est publiée sur Letterboxd',
         configSchema: {
           type: 'object',
           required: ['username'],
           properties: {
             username: {
               type: 'string',
-              description: 'Letterboxd username to monitor',
+              description: "Nom d’utilisateur Letterboxd à surveiller",
             },
           },
         },
       },
       {
         key: 'new_diary_entry',
-        description: 'Triggered when a new film is logged in the diary',
+        description: 'Déclenchée lorsqu’un nouveau film est ajouté au journal',
         configSchema: {
           type: 'object',
           required: ['username'],
           properties: {
             username: {
               type: 'string',
-              description: 'Letterboxd username to monitor',
+              description: "Nom d’utilisateur Letterboxd à surveiller",
             },
           },
         },
       },
       {
         key: 'film_watched',
-        description: 'Triggered when a film is marked as watched',
+        description: 'Déclenchée lorsqu’un film est marqué comme vu',
         configSchema: {
           type: 'object',
           required: ['username'],
           properties: {
             username: {
               type: 'string',
-              description: 'Letterboxd username to monitor',
+              description: "Nom d’utilisateur Letterboxd à surveiller",
             },
           },
         },
       },
       {
         key: 'new_list',
-        description: 'Triggered when a new list is created',
+        description: 'Déclenchée lorsqu’une nouvelle liste est créée',
         configSchema: {
           type: 'object',
           required: ['username'],
           properties: {
             username: {
               type: 'string',
-              description: 'Letterboxd username to monitor',
+              description: "Nom d’utilisateur Letterboxd à surveiller",
             },
           },
         },
       },
       {
         key: 'film_rated',
-        description: 'Triggered when a film is rated (1-5 stars)',
+        description: 'Déclenchée lorsqu’un film est noté (1 à 5 étoiles)',
         configSchema: {
           type: 'object',
           required: ['username'],
           properties: {
             username: {
               type: 'string',
-              description: 'Letterboxd username to monitor',
+              description: "Nom d’utilisateur Letterboxd à surveiller",
             },
             minRating: {
               type: 'number',
-              description: 'Minimum rating to trigger (optional)',
+              description: 'Note minimale pour déclencher (optionnelle)',
               minimum: 0,
               maximum: 5,
             },
@@ -113,7 +113,7 @@ const serviceSeeds: ServiceSeed[] = [
     reactions: [
       {
         key: 'send_webhook',
-        description: 'Send film details to a webhook URL',
+        description: 'Envoyer les informations du film vers une URL de webhook',
         configSchema: {
           type: 'object',
           required: ['webhookUrl'],
@@ -121,11 +121,11 @@ const serviceSeeds: ServiceSeed[] = [
             webhookUrl: {
               type: 'string',
               format: 'uri',
-              description: 'Webhook URL to send the film data',
+              description: 'URL du webhook à laquelle transmettre les données du film',
             },
             includeReview: {
               type: 'boolean',
-              description: 'Include review text in payload',
+              description: 'Inclure le texte de la critique dans la charge utile',
               default: true,
             },
           },
@@ -133,7 +133,7 @@ const serviceSeeds: ServiceSeed[] = [
       },
       {
         key: 'log_activity',
-        description: 'Log the Letterboxd activity to console/logs',
+        description: 'Consigner l’activité Letterboxd dans les journaux',
         configSchema: {
           type: 'object',
           properties: {
@@ -141,7 +141,7 @@ const serviceSeeds: ServiceSeed[] = [
               type: 'string',
               enum: ['info', 'debug', 'verbose'],
               default: 'info',
-              description: 'Log level for the activity',
+              description: 'Niveau de journalisation à utiliser',
             },
           },
         },
@@ -154,54 +154,54 @@ const serviceSeeds: ServiceSeed[] = [
     actions: [
       {
         key: 'new_issue',
-        description: 'Triggered when a new issue is opened on a repository',
+        description: 'Déclenchée lorsqu’une nouvelle issue est créée sur un dépôt',
         configSchema: {
           type: 'object',
           required: ['owner', 'repo'],
           properties: {
             owner: {
               type: 'string',
-              description: 'GitHub organisation or username',
+              description: 'Organisation ou nom d’utilisateur GitHub',
             },
             repo: {
               type: 'string',
-              description: 'Repository name',
+              description: 'Nom du dépôt',
             },
           },
         },
       },
       {
         key: 'new_pull_request',
-        description: 'Triggered when a new pull request is opened on a repository',
+        description: 'Déclenchée lorsqu’une nouvelle pull request est ouverte sur un dépôt',
         configSchema: {
           type: 'object',
           required: ['owner', 'repo'],
           properties: {
             owner: {
               type: 'string',
-              description: 'GitHub organisation or username',
+              description: 'Organisation ou nom d’utilisateur GitHub',
             },
             repo: {
               type: 'string',
-              description: 'Repository name',
+              description: 'Nom du dépôt',
             },
           },
         },
       },
       {
         key: 'new_release',
-        description: 'Triggered when a new release is published',
+        description: 'Déclenchée lorsqu’une nouvelle release est publiée',
         configSchema: {
           type: 'object',
           required: ['owner', 'repo'],
           properties: {
             owner: {
               type: 'string',
-              description: 'GitHub organisation or username',
+              description: 'Organisation ou nom d’utilisateur GitHub',
             },
             repo: {
               type: 'string',
-              description: 'Repository name',
+              description: 'Nom du dépôt',
             },
           },
         },
@@ -210,7 +210,7 @@ const serviceSeeds: ServiceSeed[] = [
     reactions: [
       {
         key: 'send_webhook',
-        description: 'Send GitHub activity details to a webhook URL',
+        description: 'Envoyer les détails de l’activité GitHub vers un webhook',
         configSchema: {
           type: 'object',
           required: ['webhookUrl'],
@@ -218,27 +218,252 @@ const serviceSeeds: ServiceSeed[] = [
             webhookUrl: {
               type: 'string',
               format: 'uri',
-              description: 'Webhook URL to send the GitHub data',
+              description: 'URL du webhook à laquelle envoyer les données GitHub',
             },
             includeBody: {
               type: 'boolean',
-              description: 'Include issue/PR/release body in payload',
+              description: 'Inclure le contenu de l’issue/PR/release dans la charge utile',
               default: true,
             },
           },
         },
       },
+    ],
+  },
+  {
+    slug: 'discord',
+    name: 'Discord',
+    actions: [
       {
-        key: 'log_activity',
-        description: 'Log GitHub activity to console/logs',
+        key: 'new_channel_message',
+        description: 'Déclenchée lorsqu’un nouveau message est publié dans le salon configuré',
         configSchema: {
           type: 'object',
+          required: ['guildId', 'channelId'],
+          additionalProperties: false,
           properties: {
-            logLevel: {
+            guildId: {
               type: 'string',
-              enum: ['info', 'debug', 'verbose'],
-              default: 'info',
-              description: 'Log level for the activity',
+              description: 'Identifiant du serveur Discord à surveiller',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon Discord (snowflake) à surveiller',
+              format: 'discord-channel',
+            },
+            allowBots: {
+              type: 'boolean',
+              description: 'Déclencher également sur les messages publiés par des bots',
+              default: false,
+            },
+            allowedUserIds: {
+              type: 'array',
+              description: 'Liste optionnelle d’identifiants d’auteurs autorisés à déclencher l’action',
+              items: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+      {
+        key: 'message_contains_keyword',
+        description: 'Déclenchée lorsqu’un message contient au moins un des mots-clés spécifiés',
+        configSchema: {
+          type: 'object',
+          required: ['guildId', 'channelId', 'keywords'],
+          additionalProperties: false,
+          properties: {
+            guildId: {
+              type: 'string',
+              description: 'Identifiant du serveur Discord à surveiller',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon Discord (snowflake) à surveiller',
+              format: 'discord-channel',
+            },
+            keywords: {
+              type: 'array',
+              minItems: 1,
+              description: 'Mots-clés recherchés (insensibles à la casse)',
+              items: {
+                type: 'string',
+              },
+            },
+            allowBots: {
+              type: 'boolean',
+              description: 'Déclencher également sur les messages publiés par des bots',
+              default: false,
+            },
+            allowedUserIds: {
+              type: 'array',
+              description: 'Liste optionnelle d’identifiants d’auteurs autorisés à déclencher l’action',
+              items: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+      {
+        key: 'message_with_attachment',
+        description: 'Déclenchée lorsqu’un message contient au moins une pièce jointe',
+        configSchema: {
+          type: 'object',
+          required: ['guildId', 'channelId'],
+          additionalProperties: false,
+          properties: {
+            guildId: {
+              type: 'string',
+              description: 'Identifiant du serveur Discord à surveiller',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon Discord (snowflake) à surveiller',
+              format: 'discord-channel',
+            },
+            allowBots: {
+              type: 'boolean',
+              description: 'Déclencher également sur les messages publiés par des bots',
+              default: false,
+            },
+            allowedUserIds: {
+              type: 'array',
+              description: 'Liste optionnelle d’identifiants d’auteurs autorisés à déclencher l’action',
+              items: {
+                type: 'string',
+              },
+            },
+            allowedContentTypes: {
+              type: 'array',
+              description: 'Liste optionnelle de types MIME requis dans les pièces jointes',
+              items: {
+                type: 'string',
+              },
+            },
+            requireImage: {
+              type: 'boolean',
+              description: 'Exiger que la pièce jointe soit une image (type MIME commençant par image/)',
+              default: false,
+            },
+          },
+        },
+      },
+    ],
+    reactions: [
+      {
+        key: 'send_channel_message',
+        description: 'Envoyer un message texte dans un salon Discord',
+        configSchema: {
+          type: 'object',
+          required: ['contentTemplate'],
+          additionalProperties: false,
+          properties: {
+            guildId: {
+              type: 'string',
+              description: 'Identifiant de serveur Discord optionnel pour faciliter la sélection du salon',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon cible. Utilise le salon source si non renseigné.',
+              format: 'discord-channel',
+            },
+            contentTemplate: {
+              type: 'string',
+              description:
+                'Modèle de message acceptant des variables comme {{activity.title}} ou {{activity.author.username}}',
+            },
+            mentionRoleIds: {
+              type: 'array',
+              description: 'Liste optionnelle d’identifiants de rôles à mentionner dans le message',
+              items: {
+                type: 'string',
+              },
+            },
+            mentionUserIds: {
+              type: 'array',
+              description: 'Liste optionnelle d’identifiants d’utilisateurs à mentionner dans le message',
+              items: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+      {
+        key: 'send_embed_message',
+        description: 'Envoyer un message enrichi (embed) dans un salon Discord',
+        configSchema: {
+          type: 'object',
+          required: ['descriptionTemplate'],
+          additionalProperties: false,
+          properties: {
+            guildId: {
+              type: 'string',
+              description: 'Identifiant de serveur Discord optionnel pour faciliter la sélection du salon',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon cible pour l’embed. Utilise le salon source si non renseigné.',
+              format: 'discord-channel',
+            },
+            titleTemplate: {
+              type: 'string',
+              description:
+                'Modèle de titre d’embed acceptant des variables (ex. {{activity.title}}). Optionnel.',
+            },
+            descriptionTemplate: {
+              type: 'string',
+              description:
+                'Modèle de description pour l’embed, avec variables. Markdown pris en charge par Discord.',
+            },
+            urlTemplate: {
+              type: 'string',
+              description: 'URL optionnelle associée au titre de l’embed (variables autorisées).',
+            },
+            color: {
+              type: 'integer',
+              description: 'Code couleur décimal pour la bordure de l’embed (ex. 5814783).',
+            },
+            footerTemplate: {
+              type: 'string',
+              description: 'Modèle optionnel pour le pied de page.',
+            },
+          },
+        },
+      },
+      {
+        key: 'add_reaction',
+        description: 'Ajouter une réaction emoji à un message',
+        configSchema: {
+          type: 'object',
+          required: ['guildId', 'channelId', 'messageId', 'emoji'],
+          additionalProperties: false,
+          properties: {
+            guildId: {
+              type: 'string',
+              description: 'Identifiant du serveur contenant le message',
+              format: 'discord-guild',
+            },
+            channelId: {
+              type: 'string',
+              description: 'Identifiant du salon contenant le message ciblé',
+              format: 'discord-channel',
+            },
+            messageId: {
+              type: 'string',
+              description: 'Identifiant du message auquel réagir',
+            },
+            emoji: {
+              type: 'string',
+              description:
+                'Emoji à utiliser (unicode comme 😀 ou format personnalisé nom:id).',
             },
           },
         },
@@ -261,7 +486,7 @@ async function ensureService(seed: ServiceSeed): Promise<void> {
     },
   });
 
-  console.log(`✅ Ensured service: ${seed.name}`);
+  console.log(`✅ Service prêt : ${seed.name}`);
 
   for (const action of seed.actions) {
     await prisma.action.upsert({
@@ -283,7 +508,7 @@ async function ensureService(seed: ServiceSeed): Promise<void> {
       },
     });
 
-    console.log(`  ✅ Action ready: ${action.key}`);
+    console.log(`  ✅ Action disponible : ${action.key}`);
   }
 
   for (const reaction of seed.reactions) {
@@ -306,23 +531,23 @@ async function ensureService(seed: ServiceSeed): Promise<void> {
       },
     });
 
-    console.log(`  ✅ Reaction ready: ${reaction.key}`);
+    console.log(`  ✅ Réaction disponible : ${reaction.key}`);
   }
 }
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Démarrage du remplissage de la base...');
 
   for (const serviceSeed of serviceSeeds) {
     await ensureService(serviceSeed);
   }
 
-  console.log('🎉 Seeding completed successfully!');
+  console.log('🎉 Remplissage terminé avec succès !');
 }
 
 main()
   .catch((error) => {
-    console.error('❌ Seeding failed', error);
+    console.error('❌ Échec du remplissage', error);
     process.exit(1);
   })
   .finally(async () => {
