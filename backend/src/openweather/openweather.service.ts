@@ -12,7 +12,7 @@ interface OpenweatherAreaConfig {
   [key: string]: unknown;
 }
 
-interface WeatherData {
+export interface WeatherData {
   city: string;
   temperature: number; // in Celsius
   condition: string; // e.g., "Clear", "Rain", "Snow", "Clouds"
