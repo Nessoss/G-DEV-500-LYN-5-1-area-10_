@@ -24,7 +24,7 @@ export class AppController {
     description: 'Informations structurées sur le client et le serveur',
     type: AboutResponseDto,
   })
-  getAbout(): AboutResponseDto {
+  async getAbout(): Promise<AboutResponseDto> {
     return this.appService.getAbout();
   }
 }
