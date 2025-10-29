@@ -1,0 +1,12 @@
+version: "2"
+authtoken: ${NGROK_AUTHTOKEN}
+tunnels:
+  backend:
+    proto: http
+    addr: server:8080
+    inspect: false
+  frontend:
+    proto: http
+    addr: client_web:3000
+    inspect: false
+web_addr: 0.0.0.0:4040
