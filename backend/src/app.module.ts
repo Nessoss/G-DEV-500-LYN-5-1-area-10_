@@ -14,6 +14,7 @@ import { LetterboxdModule } from './letterboxd/letterboxd.module';
 import { GithubModule } from './github/github.module';
 import { SpotifyModule } from './spotify/spotify.module';
 import { ConnectionsModule } from './connections/connections.module';
+// import { TunnelModule } from './tunnel/tunnel.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ConnectionsModule } from './connections/connections.module';
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
+    // TunnelModule, // Désactivé temporairement
     AuthModule,
     UsersModule,
     ServicesModule,

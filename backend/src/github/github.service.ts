@@ -3,8 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { AreaLogStatus } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 
-export type GithubActionKey =
-  | 'new_issue'
+export type GithubActionKey = 'new_issue'
   | 'new_pull_request'
   | 'new_release';
 

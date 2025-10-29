@@ -40,12 +40,11 @@ interface ConnectionStatus {
   connectedAt?: string | null;
 }
 
-const GITHUB_AUTHORIZE_URL =
-  'https://github.com/login/oauth/authorize';
-const GITHUB_ACCESS_TOKEN_URL =
-  'https://github.com/login/oauth/access_token';
+const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
+const GITHUB_ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const GITHUB_USER_API_URL = 'https://api.github.com/user';
 const GITHUB_PROVIDER_KEY = 'github';
+const SPOTIFY_PROVIDER_KEY = 'spotify';
 
 @Injectable()
 export class ConnectionsService {
@@ -59,8 +58,7 @@ export class ConnectionsService {
   ) {}
 
   async startGithubConnection(userId: number): Promise<GithubAuthorizeResult> {
-    const { clientId, redirectUri, scope } =
-      this.getGithubConfiguration();
+    const { clientId, redirectUri, scope } = this.getGithubConfiguration();
 
     const state = randomUUID();
     this.stateStore.set(state, {
@@ -147,12 +145,23 @@ export class ConnectionsService {
       (account) => account.provider === GITHUB_PROVIDER_KEY,
     );
 
+    const spotifyAccount = accounts.find(
+      (account) => account.provider === SPOTIFY_PROVIDER_KEY,
+    );
+
     return [
       {
         provider: GITHUB_PROVIDER_KEY,
         connected: Boolean(githubAccount),
         connectedAt: githubAccount
           ? githubAccount.createdAt.toISOString()
+          : null,
+      },
+      {
+        provider: SPOTIFY_PROVIDER_KEY,
+        connected: Boolean(spotifyAccount),
+        connectedAt: spotifyAccount
+          ? spotifyAccount.createdAt.toISOString()
           : null,
       },
     ];

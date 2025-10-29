@@ -7,7 +7,10 @@ import {
 import type { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
-import argon2, { type Options as Argon2Options, argon2id } from 'argon2';
+import { createHash, pbkdf2, randomBytes } from 'crypto';
+import { promisify } from 'util';
+
+const pbkdf2Async = promisify(pbkdf2);
 import type { Response } from 'express';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -25,12 +28,19 @@ interface GeneratedTokens {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly argon2Options: Argon2Options & { type: typeof argon2id } = {
-    type: argon2id,
-    memoryCost: 64 * 1024,
-    timeCost: 3,
-    parallelism: 1,
-  };
+  private readonly saltRounds = 12;
+  
+  private async hashPassword(password: string): Promise<string> {
+    const salt = randomBytes(16).toString('hex');
+    const hash = await pbkdf2Async(password, salt, 10000, 64, 'sha512');
+    return `${salt}:${hash.toString('hex')}`;
+  }
+  
+  private async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    const [salt, hash] = hashedPassword.split(':');
+    const verifyHash = await pbkdf2Async(password, salt, 10000, 64, 'sha512');
+    return hash === verifyHash.toString('hex');
+  }
   private fallbackPasswordHashPromise: Promise<string> | null = null;
 
   constructor(
@@ -52,7 +62,7 @@ export class AuthService {
     }
 
     try {
-      const passwordHash = await argon2.hash(password, this.argon2Options);
+      const passwordHash = await this.hashPassword(password);
       const user = await this.usersService.create({
         email,
         passwordHash,
@@ -196,7 +206,7 @@ export class AuthService {
       hash ?? (await this.getFallbackPasswordHash());
 
     try {
-      return await argon2.verify(hashToVerify, password, this.argon2Options);
+      return await this.verifyPassword(password, hashToVerify);
     } catch (error) {
       this.logger.error('Password verification failed', { error });
       return false;
@@ -205,7 +215,7 @@ export class AuthService {
 
   private async getFallbackPasswordHash(): Promise<string> {
     if (!this.fallbackPasswordHashPromise) {
-      this.fallbackPasswordHashPromise = argon2.hash(randomUUID(), this.argon2Options);
+      this.fallbackPasswordHashPromise = this.hashPassword(randomUUID());
     }
 
     return this.fallbackPasswordHashPromise;

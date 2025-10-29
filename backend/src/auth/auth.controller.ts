@@ -13,7 +13,6 @@ import {
   BadRequestException,
   ValidationPipe,
   Optional,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -24,6 +23,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { OAuth2Service } from './oauth2.service';
 import { RegisterDto } from './dto/register.dto';
@@ -35,7 +35,9 @@ import {
 } from './dto/login-response.dto';
 import { RateLimitService } from './rate-limit.service';
 import { GoogleOAuthDto } from './dto/google-oauth.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UsersService } from '../users/users.service';
+import { AuthConfigService } from './auth.config';
+
 
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
 const TOO_MANY_REQUESTS_MESSAGE = 'Too many login attempts. Try again later.';
@@ -48,6 +50,9 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly rateLimitService: RateLimitService,
+    private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly authConfigService: AuthConfigService,
     @Optional() private readonly oauth2Service?: OAuth2Service,
   ) {}
 
@@ -183,8 +188,39 @@ export class AuthController {
    * Start Spotify OAuth flow
    */
   @Get('spotify')
-  async spotifyAuth(@Res() response: Response): Promise<void> {
-    const spotifyAuthUrl = this.buildSpotifyAuthUrl();
+  async spotifyAuth(
+    @Query('token') token: string,
+    @Req() request: Request, 
+    @Res() response: Response
+  ): Promise<void> {
+    let userId: number;
+
+    if (token) {
+      // Token passed as query parameter (from frontend)
+      try {
+        const payload = this.jwtService.verify(token, {
+          publicKey: this.authConfigService.accessPublicKey,
+          algorithms: ['RS256'],
+          issuer: this.authConfigService.jwtIssuer,
+          audience: this.authConfigService.jwtAudience,
+        }) as { sub: string };
+        userId = parseInt(payload.sub, 10);
+      } catch (error) {
+        this.logger.error('Invalid token in Spotify auth request', error);
+        response.redirect(`${process.env.FRONTEND_URL}/connections?error=invalid_token`);
+        return;
+      }
+    } else {
+      // Try to get from JWT guard (if user is authenticated via header)
+      const user = request.user as { id: number } | undefined;
+      if (!user) {
+        response.redirect(`${process.env.FRONTEND_URL}/connections?error=not_authenticated`);
+        return;
+      }
+      userId = user.id;
+    }
+
+    const spotifyAuthUrl = this.buildSpotifyAuthUrl(userId);
     response.redirect(spotifyAuthUrl);
   }
 
@@ -212,37 +248,33 @@ export class AuthController {
     }
 
     try {
+      // Extract userId from state parameter
+      const userId = this.extractUserIdFromState(state);
+      if (!userId) {
+        this.logger.error('Invalid state parameter - cannot extract user ID');
+        response.redirect(`${process.env.FRONTEND_URL}/connections?error=invalid_state`);
+        return;
+      }
+
       // Exchange code for tokens
       const tokens = await this.exchangeSpotifyCode(code);
       
       // Get user info from Spotify
       const spotifyUser = await this.fetchSpotifyUser(tokens.access_token);
       
-      // Ensure user is authenticated
-      const authHeader = request.headers.authorization;
-      if (!authHeader) {
-        response.redirect(`${process.env.FRONTEND_URL}/login?error=not_authenticated`);
-        return;
-      }
+      this.logger.log(`Spotify callback received for user ${userId}`);
 
-      // TODO: Implement user token validation
-      // const token = authHeader.split(' ')[1];
-      // const user = await this.authService.getUserFromToken(token);
-      
-      // For now, skip user validation
-      const user = { id: 1 }; // Temporary
+      // Store Spotify connection
+      await this.usersService.upsertProviderAccount({
+        userId: userId,
+        provider: 'spotify',
+        providerUserId: spotifyUser.id,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+      });
 
-      // Store Spotify connection (commented for now)
-      // await this.authService.storeProviderAccount({
-      //   userId: user.id,
-      //   provider: 'spotify',
-      //   providerUserId: spotifyUser.id,
-      //   accessToken: tokens.access_token,
-      //   refreshToken: tokens.refresh_token,
-      //   expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
-      // });
-
-      this.logger.log(`Spotify account connected for user ${user.id}`);
+      this.logger.log(`Spotify account connected for user ${userId}`);
       response.redirect(`${process.env.FRONTEND_URL}/connections?success=spotify_connected`);
     } catch (error) {
       this.logger.error(`Spotify OAuth callback error: ${error.message}`);
@@ -250,7 +282,7 @@ export class AuthController {
     }
   }
 
-  private buildSpotifyAuthUrl(): string {
+  private buildSpotifyAuthUrl(userId: number): string {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const redirectUri = process.env.SPOTIFY_CALLBACK_URL || 'http://localhost:8080/auth/spotify/callback';
     const scopes = [
@@ -269,15 +301,28 @@ export class AuthController {
       'user-follow-modify',
     ].join(' ');
 
+    // Include userId in state for OAuth callback
+    const state = `${userId}_${Math.random().toString(36).substring(7)}`;
+    
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: clientId!,
       scope: scopes,
       redirect_uri: redirectUri,
-      state: Math.random().toString(36).substring(7), // Simple state for CSRF protection
+      state: state,
     });
 
     return `https://accounts.spotify.com/authorize?${params.toString()}`;
+  }
+
+  private extractUserIdFromState(state: string): number | null {
+    if (!state) return null;
+    
+    const parts = state.split('_');
+    if (parts.length < 2) return null;
+    
+    const userId = parseInt(parts[0], 10);
+    return isNaN(userId) ? null : userId;
   }
 
   private async exchangeSpotifyCode(code: string): Promise<any> {

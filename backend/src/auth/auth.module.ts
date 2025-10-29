@@ -20,9 +20,25 @@ const oauthProviders =
   imports: [
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      signOptions: {
-        algorithm: 'RS256',
+    JwtModule.registerAsync({
+      imports: [],
+      useFactory: () => {
+        const authConfig = new AuthConfigService();
+        return {
+          privateKey: authConfig.accessPrivateKey,
+          publicKey: authConfig.accessPublicKey,
+          signOptions: {
+            algorithm: 'RS256',
+            expiresIn: `${authConfig.accessTokenTtlSeconds}s`,
+            issuer: authConfig.jwtIssuer,
+            audience: authConfig.jwtAudience,
+          },
+          verifyOptions: {
+            algorithms: ['RS256'],
+            issuer: authConfig.jwtIssuer,
+            audience: authConfig.jwtAudience,
+          },
+        };
       },
     }),
   ],
