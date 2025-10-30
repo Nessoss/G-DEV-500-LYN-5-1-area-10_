@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AreaLogStatus } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
+import {
+  DiscordReactionContext,
+  DiscordService,
+} from '../discord/discord.service';
 
 export type GithubActionKey = 'new_issue'
   | 'new_pull_request'
@@ -95,12 +99,15 @@ export class GithubService {
   private readonly apiBaseUrl = 'https://api.github.com';
   private readonly githubToken = process.env.GITHUB_TOKEN;
 
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly discordService: DiscordService,
+  ) {}
 
   /**
-   * Poll every 5 minutes for GitHub activity - DISABLED FOR NOW
+   * Poll every 30 seconds for GitHub activity.
    */
-  // @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async pollAllAreas(): Promise<void> {
     this.logger.log('Starting GitHub polling...');
 
@@ -287,46 +294,7 @@ export class GithubService {
           },
         });
 
-        for (const area of areas) {
-          const config = this.parseConfig(area.actionConfig);
-          if (!config) {
-            continue;
-          }
-
-          const matches = this.matchesActionCriteria(
-            activity,
-            area.action.key as GithubActionKey,
-            area.actionConfig as GithubAreaConfig,
-          );
-
-          if (!matches) {
-            continue;
-          }
-
-          try {
-            await this.executeReaction(area, activity);
-            await this.database.areaLog.create({
-              data: {
-                areaId: area.id,
-                status: AreaLogStatus.success,
-                payload: activity as any,
-              },
-            });
-          } catch (error) {
-            this.logger.error(
-              `Failed to execute reaction for area ${area.id}: ${error.message}`,
-            );
-
-            await this.database.areaLog.create({
-              data: {
-                areaId: area.id,
-                status: AreaLogStatus.failure,
-                payload: activity as any,
-                error: error.message,
-              },
-            });
-          }
-        }
+        await this.processActivityForAreas(areas, activity, serviceId);
       }
     }
   }
@@ -340,26 +308,110 @@ export class GithubService {
       case 'new_issue':
       case 'new_pull_request':
       case 'new_release':
-        // Future filters (labels, branches, etc.) can be added here.
         return true;
       default:
         return false;
     }
   }
 
+  private async processActivityForAreas(
+    areas: any[],
+    activity: GithubActivity,
+    serviceId: number,
+  ): Promise<void> {
+    for (const area of areas) {
+      const config = this.parseConfig(area.actionConfig);
+      if (!config) {
+        continue;
+      }
+
+      const matches = this.matchesActionCriteria(
+        activity,
+        area.action.key as GithubActionKey,
+        area.actionConfig as GithubAreaConfig,
+      );
+
+      if (!matches) {
+        continue;
+      }
+
+      try {
+        await this.executeReaction(area, activity);
+        await this.database.areaLog.create({
+          data: {
+            areaId: area.id,
+            status: AreaLogStatus.success,
+            payload: activity as any,
+          },
+        });
+      } catch (error) {
+        this.logger.error(
+          `Failed to execute reaction for area ${area.id}: ${error.message}`,
+        );
+
+        await this.database.areaLog.create({
+          data: {
+            areaId: area.id,
+            status: AreaLogStatus.failure,
+            payload: activity as any,
+            error: error.message,
+          },
+        });
+      }
+    }
+  }
+
   private async executeReaction(area: any, activity: GithubActivity) {
     const reactionConfig = area.reactionConfig || {};
+    const reactionServiceSlug = area.reaction?.service?.slug;
+
+    if (reactionServiceSlug === 'discord') {
+      const context = this.buildDiscordReactionContext(area, activity);
+      await this.discordService.executeReaction(
+        area.reaction.key,
+        reactionConfig,
+        context,
+      );
+      return;
+    }
 
     switch (area.reaction.key) {
       case 'send_webhook':
         await this.sendWebhook(reactionConfig, activity);
         break;
       case 'log_activity':
+        this.logger.warn(
+          `Reaction log_activity is deprecated. Area ${area.id} should be migrated to a supported reaction.`,
+        );
         this.logActivity(reactionConfig, activity);
         break;
       default:
         this.logger.warn(`Unknown reaction type: ${area.reaction.key}`);
     }
+  }
+
+  private buildDiscordReactionContext(
+    area: any,
+    activity: GithubActivity,
+  ): DiscordReactionContext {
+    return {
+      source: 'github',
+      areaId: area.id,
+      activity: {
+        actionKey: activity.actionKey,
+        type: activity.type,
+        owner: activity.owner,
+        repo: activity.repo,
+        repoUrl: `https://github.com/${activity.owner}/${activity.repo}`,
+        title: activity.title,
+        url: activity.url,
+        author: activity.author ?? null,
+        number: activity.number ?? null,
+        body: activity.body ?? null,
+        createdAt: activity.createdAt.toISOString(),
+      },
+      raw: activity,
+    };
   }
 
   private async sendWebhook(
@@ -493,12 +545,31 @@ export class GithubService {
   }
 
   private logActivity(config: any, activity: GithubActivity) {
-    const logLevel = config?.logLevel ?? 'info';
-    const message = `GitHub ${activity.type} ${activity.number ? `#${activity.number}` : ''} in ${activity.owner}/${activity.repo}: ${activity.title}`;
+    const logLevel =
+      typeof config?.logLevel === 'string' ? config.logLevel : 'info';
+
+    const message = [
+      'GitHub reaction log_activity triggered',
+      `${activity.owner}/${activity.repo}`,
+      `${activity.type}${activity.number ? ` #${activity.number}` : ''}`,
+      `-> ${activity.title}`,
+    ].join(' - ');
 
     switch (logLevel) {
       case 'debug':
         this.logger.debug(message);
+        this.logger.debug(
+          `GitHub activity payload: ${JSON.stringify(
+            {
+              url: activity.url,
+              author: activity.author,
+              createdAt: activity.createdAt?.toISOString(),
+              extra: activity.extra,
+            },
+            null,
+            2,
+          )}`,
+        );
         break;
       case 'verbose':
         this.logger.verbose(message);

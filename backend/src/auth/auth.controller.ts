@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  HttpException,
   Logger,
   Post,
   Query,
@@ -17,6 +18,10 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOperation,
   ApiOkResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
@@ -30,6 +35,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import {
   LoginResponseDto,
+  RegisterResponseDto,
   TooManyRequestsResponseDto,
   UnauthorizedResponseDto,
 } from './dto/login-response.dto';
@@ -37,10 +43,13 @@ import { RateLimitService } from './rate-limit.service';
 import { GoogleOAuthDto } from './dto/google-oauth.dto';
 import { UsersService } from '../users/users.service';
 import { AuthConfigService } from './auth.config';
+import {
+  ErrorResponseDto,
+  ValidationErrorResponseDto,
+} from '../common/dto/error-response.dto';
 
-
-const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
-const TOO_MANY_REQUESTS_MESSAGE = 'Too many login attempts. Try again later.';
+const INVALID_CREDENTIALS_MESSAGE = 'Identifiants invalides';
+const TOO_MANY_REQUESTS_MESSAGE = 'Trop de tentatives de connexion. Réessayez plus tard.';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -59,25 +68,33 @@ export class AuthController {
   /**
    * Register a new user
    * POST /auth/register
-   */
+  */
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Créer un nouveau compte utilisateur',
+    description:
+      'Crée un utilisateur avec l’e-mail et le mot de passe fournis, puis émet les jetons d’accès et de rafraîchissement.',
+  })
+  @ApiBody({ type: RegisterDto })
+  @ApiCreatedResponse({
+    description: 'Utilisateur enregistré avec succès',
+    type: RegisterResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'La validation a échoué pour les données fournies',
+    type: ValidationErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'Un compte existe déjà pour cette adresse e-mail',
+    type: ErrorResponseDto,
+  })
   async register(
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     registerDto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<{
-    message: string;
-    access_token: string;
-    expires_in: number;
-    token_type: 'Bearer';
-    user: {
-      id: string;
-      email: string;
-      roles: string[];
-    };
-  }> {
-    this.logger.log(`Registration attempt for email: ${registerDto.email}`);
+  ): Promise<RegisterResponseDto> {
+    this.logger.log(`Tentative d’inscription pour l’e-mail : ${registerDto.email}`);
 
     const user = await this.authService.register(registerDto);
     const tokens = await this.authService.generateTokens(user);
@@ -85,15 +102,24 @@ export class AuthController {
     const loginPayload = this.authService.buildLoginResponse(user, tokens);
 
     return {
-      message: 'User successfully registered',
+      message: 'Utilisateur créé avec succès',
       ...loginPayload,
     };
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Authentifier un utilisateur par e-mail et mot de passe',
+    description:
+      'Valide les identifiants, émet les jetons d’accès/de rafraîchissement et positionne le cookie de rafraîchissement.',
+  })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({ type: LoginResponseDto })
+  @ApiBadRequestResponse({
+    description: 'La validation des identifiants fournis a échoué',
+    type: ValidationErrorResponseDto,
+  })
   @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
   @ApiTooManyRequestsResponse({ type: TooManyRequestsResponseDto })
   async login(
@@ -107,7 +133,7 @@ export class AuthController {
     const status = await this.rateLimitService.evaluate(email, clientIp);
 
     if (status.isLocked) {
-      this.logger.warn('Login attempt while locked', {
+      this.logger.warn('Tentative de connexion alors que le compte est verrouillé', {
         email,
         clientIp,
         lockTtlSeconds: status.lockTtlSeconds,
@@ -117,18 +143,21 @@ export class AuthController {
     }
 
     if (status.isRateLimited) {
-      this.logger.warn('Rate limit exceeded before credential check', {
+      this.logger.warn('Quota de tentatives dépassé avant vérification des identifiants', {
         email,
         clientIp,
       });
-      throw new BadRequestException(TOO_MANY_REQUESTS_MESSAGE);
+      throw new HttpException(
+        TOO_MANY_REQUESTS_MESSAGE,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     const user = await this.authService.validateUser(email, loginDto.password);
 
     if (!user) {
       const failureOutcome = await this.rateLimitService.registerFailure(email, clientIp);
-      this.logger.warn('Login attempt failed', {
+      this.logger.warn('Échec de la tentative de connexion', {
         email,
         clientIp,
         rateLimited: failureOutcome.rateLimited,
@@ -138,7 +167,10 @@ export class AuthController {
       await this.authService.enforceUnauthorizedDelay();
 
       if (failureOutcome.rateLimited) {
-        throw new BadRequestException(TOO_MANY_REQUESTS_MESSAGE);
+        throw new HttpException(
+          TOO_MANY_REQUESTS_MESSAGE,
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
       }
 
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
@@ -149,37 +181,50 @@ export class AuthController {
     const tokens = await this.authService.generateTokens(user);
     this.authService.setRefreshTokenCookie(response, tokens.refreshToken);
 
-    this.logger.log('Authentication successful', { email, userId: user.id });
+    this.logger.log('Authentification réussie', { email, userId: user.id });
 
     return this.authService.buildLoginResponse(user, tokens);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Révoquer le cookie de jeton de rafraîchissement',
+    description: 'Supprime le cookie de rafraîchissement de la réponse et consigne la déconnexion.',
+  })
+  @ApiNoContentResponse({ description: 'Déconnexion effectuée' })
   async logout(@Res({ passthrough: true }) response: Response): Promise<void> {
     this.authService.clearRefreshTokenCookie(response);
-    this.logger.log('Logout successful');
+    this.logger.log('Déconnexion réussie');
   }
 
   @Post('oauth2/google')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Authentifier via Google OAuth',
+    description:
+      'Échange un jeton Google ID contre des jetons applicatifs. Requiert la configuration du service OAuth2.',
+  })
   @ApiBody({ type: GoogleOAuthDto })
   @ApiOkResponse({ type: LoginResponseDto })
-  @ApiBadRequestResponse({ description: 'Google OAuth is not configured or token is invalid.' })
+  @ApiBadRequestResponse({
+    description: 'Google OAuth n’est pas configuré ou le jeton fourni est invalide',
+    type: ErrorResponseDto,
+  })
   async loginWithGoogleOAuth(
     @Body(new ValidationPipe({ whitelist: true })) body: GoogleOAuthDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<LoginResponseDto> {
     if (!this.oauth2Service) {
-      this.logger.error('Google OAuth attempted but not configured.');
-      throw new BadRequestException('Google OAuth is not configured.');
+      this.logger.error('Tentative de Google OAuth alors que la configuration est absente.');
+      throw new BadRequestException('Google OAuth n’est pas configuré.');
     }
 
     const user = await this.oauth2Service.loginWithGoogle(body.token);
     const tokens = await this.authService.generateTokens(user);
     this.authService.setRefreshTokenCookie(response, tokens.refreshToken);
 
-    this.logger.log('Google OAuth login successful', { userId: user.id });
+    this.logger.log('Connexion Google OAuth réussie', { userId: user.id });
 
     return this.authService.buildLoginResponse(user, tokens);
   }

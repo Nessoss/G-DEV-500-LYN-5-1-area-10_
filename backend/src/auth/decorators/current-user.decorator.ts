@@ -20,13 +20,13 @@ export const CurrentUser = createParamDecorator(
     const payload = request.user;
 
     if (!payload) {
-      throw new UnauthorizedException('Missing authentication payload');
+      throw new UnauthorizedException('Aucun jeton d’authentification fourni');
     }
 
     const userId = Number(payload.sub);
 
     if (!Number.isInteger(userId)) {
-      throw new UnauthorizedException('Invalid authentication payload');
+      throw new UnauthorizedException('Jeton d’authentification invalide');
     }
 
     return {

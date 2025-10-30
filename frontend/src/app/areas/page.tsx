@@ -2,17 +2,19 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { Plus, Power, PowerOff, Settings } from "lucide-react"
+import { Plus, Power, PowerOff, Settings, Pencil, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { CreateAreaModal } from "@/components/CreateAreaModal"
-import { getAreas, updateAreaStatus, ApiError } from "@/lib/api"
+import { getAreas, updateAreaStatus, deleteArea, ApiError } from "@/lib/api"
 import type { Area } from "@/types/area"
 import { useAuthUser } from "@/hooks/use-auth-user"
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<Area[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingArea, setEditingArea] = useState<Area | null>(null)
+  const [deletingAreaId, setDeletingAreaId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const authUser = useAuthUser()
@@ -62,6 +64,36 @@ export default function AreasPage() {
         alert("Impossible de mettre à jour l'area. Veuillez réessayer.")
       }
     }
+  }
+
+  const handleDeleteArea = async (areaId: number) => {
+    const target = areas.find(a => a.id === areaId)
+    if (!target) return
+
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(`Supprimer l'area « ${target.name} » ?`)
+      if (!confirmed) return
+    }
+
+    try {
+      setDeletingAreaId(areaId)
+      await deleteArea(areaId)
+      setAreas(prevAreas => prevAreas.filter(a => a.id !== areaId))
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'area:", err)
+      if (err instanceof ApiError) {
+        alert(`Erreur: ${err.message}`)
+      } else {
+        alert("Impossible de supprimer l'area. Veuillez réessayer.")
+      }
+    } finally {
+      setDeletingAreaId(null)
+    }
+  }
+
+  const handleEditArea = async () => {
+    await loadAreas()
+    setEditingArea(null)
   }
 
   const handleCreateArea = async () => {
@@ -196,7 +228,7 @@ export default function AreasPage() {
                   }`}
                 >
                   <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition-all duration-300 flex-shrink-0">
                           <Settings className="h-6 w-6 text-primary hover:rotate-12 transition-transform duration-300" />
@@ -213,6 +245,29 @@ export default function AreasPage() {
                             </span>
                           </div>
                         </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingArea(area)}
+                          aria-label="Modifier l'area"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteArea(area.id)}
+                          disabled={deletingAreaId === area.id}
+                          aria-label="Supprimer l'area"
+                        >
+                          {deletingAreaId === area.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                     <CardDescription className="mt-4 text-base leading-relaxed">
@@ -290,6 +345,13 @@ export default function AreasPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateArea}
+      />
+      <CreateAreaModal
+        isOpen={Boolean(editingArea)}
+        onClose={() => setEditingArea(null)}
+        onSubmit={handleEditArea}
+        mode="edit"
+        area={editingArea}
       />
       {/* Footer */}
       <footer className="border-t relative">

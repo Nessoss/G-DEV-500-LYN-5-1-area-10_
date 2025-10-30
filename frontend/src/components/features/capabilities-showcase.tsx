@@ -6,45 +6,45 @@ import { Card } from "@/components/ui/card"
 const capabilities = [
   {
     icon: Zap,
-    title: "Intelligent automation",
-    description: "Build complex workflows with our intuitive visual editor. Drag, drop, and connect every step.",
+    title: "Automatisation intelligente",
+    description: "Construisez des workflows complexes avec notre éditeur visuel intuitif. Glissez, déposez et reliez chaque étape.",
     color: "light-blue",
-    features: ["Drag & drop builder", "Ready-made templates", "Integrated AI"],
+    features: ["Éditeur glisser-déposer", "Modèles prêts à l’emploi", "IA intégrée"],
   },
   {
     icon: Shield,
-    title: "Enterprise security",
-    description: "Keep data safe with AES-256 encryption, OAuth 2.0, and end-to-end GDPR compliance.",
+    title: "Sécurité d’entreprise",
+    description: "Protégez vos données grâce au chiffrement AES-256, à OAuth 2.0 et à la conformité RGPD de bout en bout.",
     color: "mint",
-    features: ["End-to-end encryption", "Regular audits", "ISO 27001"],
+    features: ["Chiffrement de bout en bout", "Audits réguliers", "ISO 27001"],
   },
   {
     icon: Workflow,
-    title: "Advanced logic",
-    description: "Conditions, loops, filters, and data transforms—everything you need for tailored automation.",
+    title: "Logique avancée",
+    description: "Conditions, boucles, filtres et transformations de données : tout ce qu’il faut pour une automatisation sur mesure.",
     color: "soft-yellow",
-    features: ["If/Then/Else", "For Each loops", "JSON filters"],
+    features: ["Conditions Si/Alors/Sinon", "Boucles Pour chaque", "Filtres JSON"],
   },
   {
     icon: Code2,
-    title: "APIs & webhooks",
-    description: "Connect any service with custom webhooks and a fully documented SDK.",
+    title: "API & webhooks",
+    description: "Connectez n’importe quel service via des webhooks personnalisés et un SDK entièrement documenté.",
     color: "light-blue",
-    features: ["REST API", "Webhooks", "JavaScript SDK"],
+    features: ["API REST", "Webhooks", "SDK JavaScript"],
   },
   {
     icon: Globe,
-    title: "Multi-region",
-    description: "Distributed global infrastructure keeps data in the region you choose.",
+    title: "Infrastructure multi-régions",
+    description: "Une infrastructure mondiale distribuée conserve vos données dans la région que vous choisissez.",
     color: "mint",
-    features: ["EU, US, APAC", "Latency <50ms", "Global CDN"],
+    features: ["UE, États-Unis, APAC", "Latence <50 ms", "CDN mondial"],
   },
   {
     icon: Gauge,
-    title: "Extreme performance",
-    description: "Instant execution, auto-scaling, and real-time monitoring for every workflow.",
+    title: "Performance extrême",
+    description: "Exécution instantanée, auto-scalabilité et supervision en temps réel pour chaque workflow.",
     color: "soft-yellow",
-    features: ["<1s execution", "Auto-scaling", "24/7 monitoring"],
+    features: ["<1 s d’exécution", "Auto-scalabilité", "Supervision 24/7"],
   },
 ]
 
@@ -55,14 +55,14 @@ export function CapabilitiesShowcase() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-foreground">Everything you need,</span>
+              <span className="text-foreground">Tout ce dont vous avez besoin,</span>
               <br />
               <span className="bg-gradient-to-r from-light-blue to-mint bg-clip-text text-transparent">
-                and so much more
+                et bien plus encore
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A complete platform that grows alongside your ambitions
+              Une plateforme complète qui évolue au rythme de vos ambitions
             </p>
           </div>
 

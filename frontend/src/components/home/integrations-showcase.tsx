@@ -5,11 +5,11 @@ import { ArrowRight, Search } from "lucide-react"
 export function IntegrationsShowcase() {
   const categories = [
     { name: "Communication", count: 150, color: "light-blue" },
-    { name: "CRM & Sales", count: 200, color: "mint" },
+    { name: "CRM & ventes", count: 200, color: "mint" },
     { name: "Marketing", count: 180, color: "soft-yellow" },
-    { name: "Productivity", count: 220, color: "light-blue" },
+    { name: "Productivité", count: 220, color: "light-blue" },
     { name: "E-commerce", count: 140, color: "mint" },
-    { name: "Analytics", count: 90, color: "soft-yellow" },
+    { name: "Analytique", count: 90, color: "soft-yellow" },
   ]
 
   const popularApps = [
@@ -28,12 +28,12 @@ export function IntegrationsShowcase() {
       <div className="container mx-auto">
         <div className="mb-16 text-center">
           <h2 className="mb-4 text-balance text-4xl font-bold text-navy md:text-5xl dark:text-white">
-            Connect with{" "}
-            <span className="bg-gradient-to-r from-light-blue to-mint bg-clip-text text-transparent">1,200+ apps</span>
+            Connectez-vous à{" "}
+            <span className="bg-gradient-to-r from-light-blue to-mint bg-clip-text text-transparent">plus de 1 200 applications</span>
           </h2>
           <p className="mx-auto max-w-2xl text-pretty text-lg text-muted-foreground">
-            Integrate with all your favorite tools. From communication to analytics, we&apos;ve got you covered with
-            deep, native integrations.
+            Intégrez tous vos outils favoris. De la communication à l’analyse, nous proposons des intégrations
+            natives et approfondies.
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export function IntegrationsShowcase() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="mb-1 text-lg font-bold text-navy dark:text-white">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.count} integrations</p>
+                  <p className="text-sm text-muted-foreground">{category.count} intégrations</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1 group-hover:text-light-blue dark:text-gray-300" />
               </div>
@@ -55,7 +55,7 @@ export function IntegrationsShowcase() {
         </div>
 
         <div className="mb-12">
-          <h3 className="mb-6 text-center text-2xl font-bold text-navy dark:text-white">Most Popular Integrations</h3>
+          <h3 className="mb-6 text-center text-2xl font-bold text-navy dark:text-white">Intégrations les plus populaires</h3>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             {popularApps.map((app, index) => (
               <Card
@@ -85,7 +85,7 @@ export function IntegrationsShowcase() {
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold text-navy dark:text-white">{app.name}</div>
-                    <div className="text-xs text-muted-foreground">{app.users} users</div>
+                    <div className="text-xs text-muted-foreground">{app.users} utilisateurs</div>
                   </div>
                 </div>
               </Card>
@@ -100,7 +100,7 @@ export function IntegrationsShowcase() {
             className="group border-navy text-navy hover:bg-navy hover:text-white bg-transparent dark:border-light-blue dark:text-light-blue dark:hover:bg-light-blue/15"
           >
             <Search className="mr-2 h-4 w-4" />
-            Browse All Integrations
+            Explorer toutes les intégrations
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
         </div>

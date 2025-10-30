@@ -1,17 +1,12 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
   GithubService,
@@ -19,6 +14,12 @@ import {
   GITHUB_SUPPORTED_ACTIONS,
 } from './github.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  GithubPollingResponseDto,
+  GithubTestResponseDto,
+} from './dto/github-response.dto';
+import { UnauthorizedResponseDto } from '../auth/dto/login-response.dto';
+import { ErrorResponseDto } from '../common/dto/error-response.dto';
 
 @ApiTags('github')
 @ApiBearerAuth()
@@ -28,36 +29,45 @@ export class GithubController {
 
   @UseGuards(JwtAuthGuard)
   @Get('test')
-  @ApiOperation({ summary: 'Test GitHub polling for a repository' })
+  @ApiOperation({ summary: 'Tester la récupération GitHub pour un dépôt' })
   @ApiQuery({
     name: 'owner',
     required: true,
-    description: 'GitHub organisation or user',
+    description: 'Organisation ou utilisateur GitHub',
   })
   @ApiQuery({
     name: 'repo',
     required: true,
-    description: 'Repository name',
+    description: 'Nom du dépôt',
   })
   @ApiQuery({
     name: 'action',
     required: false,
-    description: 'Optional action key to filter the results',
+    description: 'Clé d’action optionnelle pour filtrer le résultat',
     enum: GITHUB_SUPPORTED_ACTIONS,
   })
+  @ApiOkResponse({
+    description: 'Récupération manuelle effectuée avec succès',
+    type: GithubTestResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Paramètres manquants ou action non prise en charge',
+    type: ErrorResponseDto,
+  })
+  @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
   async testRepository(
     @Query('owner') owner: string,
     @Query('repo') repo: string,
     @Query('action') action?: string,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<GithubTestResponseDto> {
     if (!owner || !repo) {
-      return { error: 'Parameters "owner" and "repo" are required' };
+      throw new BadRequestException('Les paramètres "owner" et "repo" sont obligatoires.');
     }
 
     if (action && !GITHUB_SUPPORTED_ACTIONS.includes(action as GithubActionKey)) {
-      return {
-        error: `Invalid action key. Supported values: ${GITHUB_SUPPORTED_ACTIONS.join(', ')}`,
-      };
+      throw new BadRequestException(
+        `Clé d’action invalide. Valeurs acceptées : ${GITHUB_SUPPORTED_ACTIONS.join(', ')}`,
+      );
     }
 
     const actionKey = action as GithubActionKey | undefined;
@@ -74,9 +84,14 @@ export class GithubController {
   @UseGuards(JwtAuthGuard)
   @Post('poll')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Manually trigger GitHub polling for all areas' })
-  async triggerPolling() {
+  @ApiOperation({ summary: 'Déclencher manuellement le polling GitHub pour toutes les areas' })
+  @ApiOkResponse({
+    description: 'Polling lancé avec succès',
+    type: GithubPollingResponseDto,
+  })
+  @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
+  async triggerPolling(): Promise<GithubPollingResponseDto> {
     await this.githubService.pollAllAreas();
-    return { message: 'GitHub polling triggered successfully' };
+    return { message: 'Polling GitHub lancé avec succès' };
   }
 }

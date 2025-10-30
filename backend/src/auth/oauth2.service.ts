@@ -37,7 +37,7 @@ export class OAuth2Service {
 
       const payload = ticket.getPayload();
       if (!payload) {
-        throw new UnauthorizedException('Invalid Google token');
+        throw new UnauthorizedException('Jeton Google invalide');
       }
 
       return {
@@ -47,8 +47,8 @@ export class OAuth2Service {
         picture: payload.picture,
       };
     } catch (error) {
-      this.logger.error('Failed to verify Google token:', error);
-      throw new UnauthorizedException('Invalid Google token');
+      this.logger.error('Échec de la vérification du jeton Google :', error);
+      throw new UnauthorizedException('Jeton Google invalide');
     }
   }
 
@@ -60,14 +60,14 @@ export class OAuth2Service {
   async loginWithGoogle(token: string): Promise<User> {
     const googleProfile = await this.verifyGoogleToken(token);
     
-    this.logger.log(`Google OAuth2 attempt for email: ${googleProfile.email}`);
+    this.logger.log(`Tentative Google OAuth2 pour : ${googleProfile.email}`);
 
     // Check if user already exists
     let user = await this.usersService.findByEmail(googleProfile.email);
 
     if (!user) {
       // Create new user if doesn't exist
-      this.logger.log(`Creating new user for Google account: ${googleProfile.email}`);
+      this.logger.log(`Création d’un nouvel utilisateur pour le compte Google : ${googleProfile.email}`);
       user = await this.usersService.create({
         email: googleProfile.email,
         passwordHash: '', // No password for OAuth2 users
@@ -94,7 +94,7 @@ export class OAuth2Service {
       });
     }
 
-    this.logger.log(`Google OAuth2 login successful for user ID: ${user.id}`);
+    this.logger.log(`Connexion Google OAuth2 réussie pour l’utilisateur ID ${user.id}`);
 
     return user;
   }

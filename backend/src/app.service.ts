@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from './database/database.service';
 import type { AboutResponse } from './interfaces/about.interface';
+import type { AboutResponseDto } from './app/dto/about-response.dto';
 
 @Injectable()
 export class AppService {
@@ -9,6 +10,7 @@ export class AppService {
   getHello(): string {
     return 'Hello World!';
   }
+
 
   async getAbout(): Promise<AboutResponse> {
     const currentTime = Math.floor(Date.now() / 1000);
@@ -38,7 +40,6 @@ export class AppService {
         description: reaction.description || '',
       })),
     }));
-
     return {
       client: {
         host: '127.0.0.1',

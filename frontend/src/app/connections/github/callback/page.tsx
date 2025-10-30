@@ -47,7 +47,7 @@ function GithubCallbackContent() {
           window.close()
         }, 1200)
       } catch (error) {
-        console.error("GitHub connection failed:", error)
+        console.error("Échec de la connexion GitHub :", error)
         setState("error")
         const errorMessage =
           error instanceof Error

@@ -1,14 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { DatabaseService } from './database/database.service';
 
 describe('AppController', () => {
   let appController: AppController;
 
+  const mockDatabaseService = {
+    service: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
+
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        {
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
+        },
+      ],
     }).compile();
 
     appController = app.get<AppController>(AppController);
@@ -21,8 +34,8 @@ describe('AppController', () => {
   });
 
   describe('about.json', () => {
-    it('should return about information with current time and services', () => {
-      const result = appController.getAbout();
+    it('should return about information with current time and services', async () => {
+      const result = await appController.getAbout();
 
       expect(result).toHaveProperty('client');
       expect(result).toHaveProperty('server');

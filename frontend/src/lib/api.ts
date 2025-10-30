@@ -4,9 +4,14 @@ import type {
   Area,
   CreateAreaPayload,
   UpdateAreaStatusPayload,
+  UpdateAreaPayload,
 } from "@/types/area"
 import type { ConnectionsResponse } from "@/types/connections"
 import type { SpotifyProfile, SpotifyPlaylist, SpotifyCurrentlyPlaying } from "@/types/spotify"
+import type {
+  DiscordGuildsResponse,
+  DiscordChannelsResponse,
+} from "@/types/connections"
 
 // Error handling
 type ErrorPayload = {
@@ -86,7 +91,21 @@ async function fetchWithAuth<T>(
     await parseError(response)
   }
 
-  return (await response.json()) as T
+  if (response.status === 204 || response.status === 205) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+
+  if (!text) {
+    return undefined as T
+  }
+
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return text as unknown as T
+  }
 }
 
 // API functions
@@ -134,6 +153,16 @@ export async function updateAreaStatus(
 export async function deleteArea(areaId: number): Promise<void> {
   await fetchWithAuth<void>(`/api/areas/${areaId}`, {
     method: "DELETE",
+  })
+}
+
+export async function updateArea(
+  areaId: number,
+  payload: UpdateAreaPayload
+): Promise<Area> {
+  return fetchWithAuth<Area>(`/api/areas/${areaId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   })
 }
 
@@ -213,6 +242,67 @@ export async function getSpotifyPlaylists(): Promise<SpotifyPlaylist[]> {
  */
 export async function getSpotifyNowPlaying(): Promise<SpotifyCurrentlyPlaying | null> {
   return fetchWithAuth<SpotifyCurrentlyPlaying | null>("/api/spotify/now-playing")
+  
+/**
+ * Initialise le flux OAuth Discord.
+ */
+export async function startDiscordConnection(): Promise<{
+  authorizeUrl: string
+  state: string
+}> {
+  return fetchWithAuth<{ authorizeUrl: string; state: string }>(
+    "/api/connections/discord/start",
+    {
+      method: "POST",
+    }
+  )
+}
+
+/**
+ * Finalise la connexion Discord après le retour OAuth.
+ */
+export async function completeDiscordConnection(payload: {
+  code: string
+  state: string
+  guildId?: string
+}): Promise<{
+  success: boolean
+  provider: string
+  account: {
+    id: string
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
+  guild?: {
+    id: string
+    name: string
+    owner: boolean
+    permissions?: string
+  }
+}> {
+  return fetchWithAuth("/api/connections/discord/complete", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Récupère les guildes (serveurs) Discord disponibles pour l'utilisateur.
+ */
+export async function getDiscordGuilds(): Promise<DiscordGuildsResponse> {
+  return fetchWithAuth<DiscordGuildsResponse>("/api/connections/discord/guilds")
+}
+
+/**
+ * Récupère les canaux Discord pour une guilde donnée.
+ */
+export async function getDiscordChannels(
+  guildId: string
+): Promise<DiscordChannelsResponse> {
+  return fetchWithAuth<DiscordChannelsResponse>(
+    `/api/connections/discord/guilds/${guildId}/channels`
+  )
 }
 
 /**

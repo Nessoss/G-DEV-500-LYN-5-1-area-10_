@@ -14,7 +14,7 @@ import { LetterboxdModule } from './letterboxd/letterboxd.module';
 import { GithubModule } from './github/github.module';
 import { SpotifyModule } from './spotify/spotify.module';
 import { ConnectionsModule } from './connections/connections.module';
-// import { TunnelModule } from './tunnel/tunnel.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
@@ -37,6 +37,7 @@ import { ConnectionsModule } from './connections/connections.module';
     GithubModule,
     SpotifyModule,
     ConnectionsModule,
+    DiscordModule,
   ],
   controllers: [AppController, DebugController],
   providers: [AppService],

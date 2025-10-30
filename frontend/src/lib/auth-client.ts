@@ -89,10 +89,9 @@ export async function registerWithEmail(data: RegisterPayload) {
 }
 
 export async function loginWithEmail(data: LoginPayload) {
-  // rememberMe is only used client-side, don't send it to backend
-  const { rememberMe, ...loginData } = data
-  console.log('Remember me:', rememberMe) // Use the variable to avoid lint warning
-  return postJson<LoginResponse>("/api/auth/login", loginData)
+  // rememberMe est géré côté client ; n'envoyons que les identifiants
+  const { email, password } = data
+  return postJson<LoginResponse>("/api/auth/login", { email, password })
 }
 
 export async function loginWithGoogle(token: string) {
