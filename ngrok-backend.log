@@ -1,0 +1,43 @@
+nohup: les entrées sont ignorées
+t=2025-10-29T14:50:49+0100 lvl=info msg="no configuration paths supplied"
+t=2025-10-29T14:50:49+0100 lvl=info msg="using configuration at default config path" path=/home/philou/.config/ngrok/ngrok.yml
+t=2025-10-29T14:50:49+0100 lvl=info msg="open config file" path=/home/philou/.config/ngrok/ngrok.yml err=nil
+t=2025-10-29T14:50:49+0100 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2025-10-29T14:50:50+0100 lvl=info msg="update available" obj=updater
+t=2025-10-29T14:50:50+0100 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-29T14:50:50+0100 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-29T14:50:50+0100 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://localhost:8080 url=https://taneka-prius-sybil.ngrok-free.dev
+t=2025-10-29T14:51:42+0100 lvl=info msg=start pg=/api/tunnels id=738bd00af62d3f3e
+t=2025-10-29T14:51:42+0100 lvl=info msg=end pg=/api/tunnels id=738bd00af62d3f3e status=200 dur=299.229µs
+t=2025-10-29T14:56:42+0100 lvl=info msg="join connections" obj=join id=a24f3d2957b2 l=[::1]:8080 r=[2a02:8440:511b:512d:4161:5b30:7818:7e90]:50108
+t=2025-10-29T14:58:25+0100 lvl=info msg="join connections" obj=join id=daee3c44982d l=[::1]:8080 r=[2a02:8440:511b:512d:4161:5b30:7818:7e90]:53618
+t=2025-10-29T14:58:40+0100 lvl=info msg="join connections" obj=join id=c79146234421 l=[::1]:8080 r=[2a02:8440:511b:512d:4161:5b30:7818:7e90]:53618
+t=2025-10-29T14:58:52+0100 lvl=info msg="join connections" obj=join id=f538f61fd6de l=[::1]:8080 r=[2a02:8440:511b:512d:4161:5b30:7818:7e90]:53618
+t=2025-10-29T15:03:35+0100 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=fe8da6b782d6 clientid=46827143371d3d9ccd8e94ca85acae74
+t=2025-10-29T15:03:35+0100 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=7f1659ed27d0 err="session closed"
+t=2025-10-29T15:03:35+0100 lvl=info msg="client session established" obj=tunnels.session
+t=2025-10-29T15:03:35+0100 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-10-29T15:06:17+0100 lvl=info msg="join connections" obj=join id=2b747738b43b l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:59184
+t=2025-10-29T15:06:40+0100 lvl=info msg="join connections" obj=join id=72ac354cf7e2 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:59184
+t=2025-10-29T15:12:11+0100 lvl=info msg="join connections" obj=join id=9d07b49369ab l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:33868
+t=2025-10-29T15:13:43+0100 lvl=info msg="join connections" obj=join id=ac35bf838c63 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:33868
+t=2025-10-29T15:19:10+0100 lvl=info msg=start pg=/api/tunnels id=f114251bd6d80982
+t=2025-10-29T15:19:10+0100 lvl=info msg=end pg=/api/tunnels id=f114251bd6d80982 status=200 dur=1.260008ms
+t=2025-10-29T15:21:16+0100 lvl=info msg="join connections" obj=join id=3d22971233da l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:49332
+t=2025-10-29T15:21:25+0100 lvl=info msg="join connections" obj=join id=3921ffe59460 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:49332
+t=2025-10-29T15:21:39+0100 lvl=info msg="join connections" obj=join id=d101aa494cb6 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:49332
+t=2025-10-29T15:29:54+0100 lvl=info msg="join connections" obj=join id=94af0e30a4b8 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:36592
+t=2025-10-29T15:30:35+0100 lvl=info msg="join connections" obj=join id=c23955f88bf1 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:36592
+t=2025-10-29T15:31:03+0100 lvl=info msg="join connections" obj=join id=c37ae6d77692 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:36592
+t=2025-10-29T15:31:58+0100 lvl=info msg="join connections" obj=join id=0f717a7d7775 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:45640
+t=2025-10-29T15:32:30+0100 lvl=info msg="join connections" obj=join id=4a9a7d17937d l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:45640
+t=2025-10-29T15:32:39+0100 lvl=info msg="join connections" obj=join id=febccb2d8f18 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:45640
+t=2025-10-29T15:33:41+0100 lvl=info msg="join connections" obj=join id=1938c7c1f5d3 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:45640
+t=2025-10-29T15:33:55+0100 lvl=info msg="join connections" obj=join id=f2d95849cde9 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:45640
+t=2025-10-29T16:09:10+0100 lvl=info msg="join connections" obj=join id=41443ea27468 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:57072
+t=2025-10-29T16:09:16+0100 lvl=info msg="join connections" obj=join id=7aacc8361c2f l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:57072
+t=2025-10-29T16:35:16+0100 lvl=info msg="join connections" obj=join id=420eac9a88c1 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:43164
+t=2025-10-29T16:35:28+0100 lvl=info msg="join connections" obj=join id=64386f5e9637 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:43164
+t=2025-10-29T16:57:27+0100 lvl=info msg="join connections" obj=join id=cae86d659639 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:47542
+t=2025-10-29T17:25:26+0100 lvl=info msg="join connections" obj=join id=e69e4059286e l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:41908
+t=2025-10-29T17:25:55+0100 lvl=info msg="join connections" obj=join id=033f80e45f91 l=[::1]:8080 r=[2001:861:8bb0:9e60:7e56:fff:a92:198c]:41908

@@ -6,8 +6,9 @@ import type {
   UpdateAreaStatusPayload,
   UpdateAreaPayload,
 } from "@/types/area"
+import type { ConnectionsResponse } from "@/types/connections"
+import type { SpotifyProfile, SpotifyPlaylist, SpotifyCurrentlyPlaying } from "@/types/spotify"
 import type {
-  ConnectionsResponse,
   DiscordGuildsResponse,
   DiscordChannelsResponse,
 } from "@/types/connections"
@@ -207,6 +208,42 @@ export async function completeGithubConnection(payload: {
   })
 }
 
+/**
+ * Initiate Spotify OAuth flow - redirect to Spotify authorization
+ */
+export function startSpotifyConnection(): void {
+  if (typeof window !== "undefined") {
+    const token = getAuthToken()
+    if (token) {
+      // Set token in header for the redirect
+      window.location.href = `/api/auth/spotify?token=${encodeURIComponent(token)}`
+    } else {
+      window.location.href = '/api/auth/spotify'
+    }
+  }
+}
+
+/**
+ * Get user's Spotify profile
+ */
+export async function getSpotifyProfile(): Promise<SpotifyProfile> {
+  return fetchWithAuth<SpotifyProfile>("/api/spotify/profile")
+}
+
+/**
+ * Get user's Spotify playlists
+ */
+export async function getSpotifyPlaylists(): Promise<SpotifyPlaylist[]> {
+  return fetchWithAuth<SpotifyPlaylist[]>("/api/spotify/playlists")
+}
+
+/**
+ * Get currently playing track
+ */
+export async function getSpotifyNowPlaying(): Promise<SpotifyCurrentlyPlaying | null> {
+  return fetchWithAuth<SpotifyCurrentlyPlaying | null>("/api/spotify/now-playing")
+}
+  
 /**
  * Initialise le flux OAuth Discord.
  */

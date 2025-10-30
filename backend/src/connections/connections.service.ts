@@ -74,6 +74,7 @@ const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
 const GITHUB_ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const GITHUB_USER_API_URL = 'https://api.github.com/user';
 const GITHUB_PROVIDER_KEY = 'github';
+const SPOTIFY_PROVIDER_KEY = 'spotify';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/api/oauth2/authorize';
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
@@ -94,8 +95,7 @@ export class ConnectionsService {
   ) {}
 
   async startGithubConnection(userId: number): Promise<GithubAuthorizeResult> {
-    const { clientId, redirectUri, scope } =
-      this.getGithubConfiguration();
+    const { clientId, redirectUri, scope } = this.getGithubConfiguration();
 
     const state = randomUUID();
     this.storeState(state, userId, 'github');
@@ -269,12 +269,23 @@ export class ConnectionsService {
       (account) => account.provider === DISCORD_PROVIDER_KEY,
     );
 
+    const spotifyAccount = accounts.find(
+      (account) => account.provider === SPOTIFY_PROVIDER_KEY,
+    );
+
     return [
       {
         provider: GITHUB_PROVIDER_KEY,
         connected: Boolean(githubAccount),
         connectedAt: githubAccount
           ? githubAccount.createdAt.toISOString()
+          : null,
+      },
+      {
+        provider: SPOTIFY_PROVIDER_KEY,
+        connected: Boolean(spotifyAccount),
+        connectedAt: spotifyAccount
+          ? spotifyAccount.createdAt.toISOString()
           : null,
       },
       {

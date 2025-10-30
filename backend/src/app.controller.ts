@@ -19,11 +19,6 @@ export class AppController {
   }
 
   @Get('about.json')
-  @ApiOperation({ summary: 'Métadonnées sur les services disponibles' })
-  @ApiOkResponse({
-    description: 'Informations structurées sur le client et le serveur',
-    type: AboutResponseDto,
-  })
   async getAbout(): Promise<AboutResponseDto> {
     return this.appService.getAbout();
   }

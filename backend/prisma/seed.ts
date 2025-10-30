@@ -547,6 +547,154 @@ const serviceSeeds: ServiceSeed[] = [
       },
     ],
   },
+  {
+    slug: 'spotify',
+    name: 'Spotify',
+    actions: [
+      {
+        key: 'new_liked_song',
+        description: 'Triggered when a new song is liked/saved',
+        configSchema: {
+          type: 'object',
+          properties: {
+            artistFilter: {
+              type: 'string',
+              description: 'Filter by artist name (optional)',
+            },
+            genreFilter: {
+              type: 'string',
+              description: 'Filter by genre (optional)',
+            },
+          },
+        },
+      },
+      {
+        key: 'new_playlist_track',
+        description: 'Triggered when a track is added to a specific playlist',
+        configSchema: {
+          type: 'object',
+          required: ['playlistId'],
+          properties: {
+            playlistId: {
+              type: 'string',
+              description: 'Spotify playlist ID to monitor',
+            },
+          },
+        },
+      },
+      {
+        key: 'now_playing_changed',
+        description: 'Triggered when the currently playing track changes',
+        configSchema: {
+          type: 'object',
+          properties: {
+            artistFilter: {
+              type: 'string',
+              description: 'Filter by artist name (optional)',
+            },
+          },
+        },
+      },
+      {
+        key: 'new_top_artist',
+        description: 'Triggered when a new artist appears in top artists',
+        configSchema: {
+          type: 'object',
+          properties: {
+            timeRange: {
+              type: 'string',
+              enum: ['short_term', 'medium_term', 'long_term'],
+              default: 'short_term',
+              description: 'Time range for top artists',
+            },
+          },
+        },
+      },
+      {
+        key: 'new_playlist_created',
+        description: 'Triggered when a new playlist is created',
+        configSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+    ],
+    reactions: [
+      {
+        key: 'add_to_playlist',
+        description: 'Add a track to a specific playlist',
+        configSchema: {
+          type: 'object',
+          required: ['playlistId'],
+          properties: {
+            playlistId: {
+              type: 'string',
+              description: 'Spotify playlist ID to add tracks to',
+            },
+          },
+        },
+      },
+      {
+        key: 'like_song',
+        description: 'Like/save the current track',
+        configSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        key: 'create_playlist',
+        description: 'Create a new playlist',
+        configSchema: {
+          type: 'object',
+          required: ['playlistName'],
+          properties: {
+            playlistName: {
+              type: 'string',
+              description: 'Name for the new playlist',
+            },
+            description: {
+              type: 'string',
+              description: 'Description for the new playlist',
+            },
+            public: {
+              type: 'boolean',
+              default: false,
+              description: 'Make the playlist public',
+            },
+          },
+        },
+      },
+      {
+        key: 'follow_artist',
+        description: 'Follow an artist',
+        configSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        key: 'send_webhook',
+        description: 'Send Spotify activity details to a webhook URL',
+        configSchema: {
+          type: 'object',
+          required: ['webhookUrl'],
+          properties: {
+            webhookUrl: {
+              type: 'string',
+              format: 'uri',
+              description: 'Webhook URL to send the Spotify data',
+            },
+            includeAlbum: {
+              type: 'boolean',
+              description: 'Include album information in payload',
+              default: true,
+            },
+          },
+        },
+      },
+    ],
+  },
 ];
 
 async function ensureService(seed: ServiceSeed): Promise<void> {

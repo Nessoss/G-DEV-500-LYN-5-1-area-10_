@@ -7,8 +7,7 @@ import {
   DiscordService,
 } from '../discord/discord.service';
 
-export type GithubActionKey =
-  | 'new_issue'
+export type GithubActionKey = 'new_issue'
   | 'new_pull_request'
   | 'new_release';
 

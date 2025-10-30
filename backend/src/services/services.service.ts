@@ -68,6 +68,8 @@ export class ServicesService {
     switch (slug) {
       case 'github':
         return 'github';
+      case 'spotify':
+        return 'spotify';
       default:
         return null;
     }
