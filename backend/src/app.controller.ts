@@ -19,7 +19,7 @@ export class AppController {
   }
 
   @Get('about.json')
-  async getAbout(): Promise<AboutResponse> {
+  async getAbout(): Promise<AboutResponseDto> {
     return this.appService.getAbout();
   }
 }

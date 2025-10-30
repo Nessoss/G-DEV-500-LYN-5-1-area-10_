@@ -11,6 +11,9 @@ RUN npm install
 # Copier tout le reste du projet
 COPY . .
 
+# Générer le client Prisma
+RUN npx prisma generate
+
 # Compiler le code TypeScript en JavaScript
 RUN npm run build
 

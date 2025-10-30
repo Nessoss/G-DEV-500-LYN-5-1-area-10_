@@ -6,15 +6,15 @@ import { Github, Music, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuthUser } from "@/hooks/use-auth-user"
-import { getConnections, startGithubConnection, startSpotifyConnection } from "@/lib/api"
 import {
   getConnections,
   startDiscordConnection,
-  startGithubConnection
+  startGithubConnection,
+  startSpotifyConnection
 } from "@/lib/api"
 import type { ConnectionStatus } from "@/types/connections"
 
-type ConnectState = "idle" | "github" | "discord"
+type ConnectState = "idle" | "github" | "discord" | "connecting"
 
 export default function ConnectionsPage() {
   const authUser = useAuthUser()

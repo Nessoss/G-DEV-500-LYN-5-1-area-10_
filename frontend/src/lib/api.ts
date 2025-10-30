@@ -242,6 +242,7 @@ export async function getSpotifyPlaylists(): Promise<SpotifyPlaylist[]> {
  */
 export async function getSpotifyNowPlaying(): Promise<SpotifyCurrentlyPlaying | null> {
   return fetchWithAuth<SpotifyCurrentlyPlaying | null>("/api/spotify/now-playing")
+}
   
 /**
  * Initialise le flux OAuth Discord.

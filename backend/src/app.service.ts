@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from './database/database.service';
-import type { AboutResponse } from './interfaces/about.interface';
 import type { AboutResponseDto } from './app/dto/about-response.dto';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class AppService {
   }
 
 
-  async getAbout(): Promise<AboutResponse> {
+  async getAbout(): Promise<AboutResponseDto> {
     const currentTime = Math.floor(Date.now() / 1000);
 
     // Fetch services dynamically from database
