@@ -7,26 +7,28 @@ on:
 
 jobs:
   sync-to-old-repo:
-    name: Sync to Epitech repository
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EPITECH_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.EPITECH_DEPLOY_KEY }}" | base64 -d > ~/.ssh/id_ed25519_epitech
+          chmod 600 ~/.ssh/id_ed25519_epitech
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          
+
+      - name: Test SSH connection
+        run: |
+          ssh -T -i ~/.ssh/id_ed25519_epitech git@github.com || true
+
       - name: Push to old repository
+        env:
+          GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519_epitech -o IdentitiesOnly=yes"
         run: |
           git remote add epitech git@github.com:EpitechPGE3-2025/G-DEV-500-LYN-5-1-area-10.git
           git push epitech ${{ github.ref_name }} --force
-
   frontend:
     name: Frontend - ESLint & Build
     runs-on: ubuntu-latest
