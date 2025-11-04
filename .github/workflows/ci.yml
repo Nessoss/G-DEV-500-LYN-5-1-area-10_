@@ -27,7 +27,7 @@ jobs:
         env:
           GIT_SSH_COMMAND: "ssh -i ~/.ssh/id_ed25519_epitech -o IdentitiesOnly=yes"
         run: |
-          git remote add epitech git@github.com:EpitechPGE3-2025/G-DEV-500-LYN-5-1-area-10.git
+          git remote add epitech git@github.com:Nessoss/Test_repo.git
           git push epitech ${{ github.ref_name }} --force
   frontend:
     name: Frontend - ESLint & Build
