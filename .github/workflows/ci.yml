@@ -9,17 +9,22 @@ jobs:
   sync-to-old-repo:
     name: Sync to Epitech repository
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'  # Seulement sur push, pas sur PR
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Récupère tout l'historique
+          fetch-depth: 0
+          
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EPITECH_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
           
       - name: Push to old repository
-        env:
-          OLD_REPO_TOKEN: ${{ secrets.OLD_REPO_TOKEN }}
         run: |
-          git remote add epitech https://x-access-token:${OLD_REPO_TOKEN}@github.com/EpitechPGE3-2025/G-DEV-500-LYN-5-1-area-10.git
+          git remote add epitech git@github.com:EpitechPGE3-2025/G-DEV-500-LYN-5-1-area-10.git
           git push epitech ${{ github.ref_name }} --force
 
   frontend:
