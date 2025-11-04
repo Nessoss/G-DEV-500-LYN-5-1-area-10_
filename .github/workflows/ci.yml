@@ -21,7 +21,7 @@ jobs:
         
     - name: Push to test repository
       run: |
-        git remote add test git@github.com:Nessoss/Test_repo.git
+        git remote add test git@github.com:EpitechPGE3-2025/G-DEV-500-LYN-5-1-area-10.git
         git push test ${{ github.ref_name }} --force
   frontend:
     name: Frontend - ESLint & Build
