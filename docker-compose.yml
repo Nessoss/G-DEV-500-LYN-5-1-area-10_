@@ -33,18 +33,15 @@ services:
       postgres:
         condition: service_healthy
 
-# Service Ngrok pour les tunnels automatiques
+# Service Ngrok pour les tunnels automatiques  
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
     restart: unless-stopped
     command: 
-      - "start"
-      - "--all"
-      - "--config"
-      - "/etc/ngrok.yml"
-    volumes:
-      - ./ngrok.yml:/etc/ngrok.yml
+      - "http"
+      - "server:8080"
+      - "--log=stdout"
     ports:
       - "4040:4040"
     environment:
