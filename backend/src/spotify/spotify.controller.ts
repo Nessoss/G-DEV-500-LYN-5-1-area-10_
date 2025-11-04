@@ -62,4 +62,25 @@ export class SpotifyController {
 
     return this.spotifyService.getCurrentlyPlaying(userId);
   }
+
+  /**
+   * Manual trigger for Spotify polling (for testing)
+   */
+  @Get('trigger-poll')
+  async triggerManualPoll() {
+    try {
+      await this.spotifyService.pollAllAreas();
+      return {
+        success: true,
+        message: 'Manual Spotify polling triggered successfully',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
 }

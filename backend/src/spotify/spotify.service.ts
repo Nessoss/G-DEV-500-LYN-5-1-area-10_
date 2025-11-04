@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AreaLogStatus } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 
@@ -125,8 +126,9 @@ export class SpotifyService {
   constructor(private readonly database: DatabaseService) {}
 
   /**
-   * Poll for Spotify activity - can be called manually for now
+   * Poll for Spotify activity - automated every 30 seconds
    */
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async pollAllAreas(): Promise<void> {
     this.logger.log('Starting Spotify polling...');
 
@@ -605,13 +607,9 @@ export class SpotifyService {
     }
 
     await this.makeSpotifyRequest(
-      `/me/following`,
+      `/me/following?type=artist&ids=${artistId}`,
       accessToken,
-      'PUT',
-      {
-        type: 'artist',
-        ids: [artistId],
-      }
+      'PUT'
     );
   }
 
