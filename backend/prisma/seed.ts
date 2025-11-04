@@ -553,66 +553,51 @@ const serviceSeeds: ServiceSeed[] = [
     actions: [
       {
         key: 'new_liked_song',
-        description: 'Triggered when a new song is liked/saved',
+        description: 'Nouvelle chanson aimée/sauvegardée',
         configSchema: {
           type: 'object',
           properties: {
             artistFilter: {
               type: 'string',
-              description: 'Filter by artist name (optional)',
+              description: 'Filtrer par nom d\'artiste (optionnel)',
             },
             genreFilter: {
               type: 'string',
-              description: 'Filter by genre (optional)',
+              description: 'Filtrer par genre (optionnel)',
             },
           },
         },
       },
       {
         key: 'new_playlist_track',
-        description: 'Triggered when a track is added to a specific playlist',
+        description: 'Morceau est ajouté à une playlist spécifique',
         configSchema: {
           type: 'object',
           required: ['playlistId'],
           properties: {
             playlistId: {
               type: 'string',
-              description: 'Spotify playlist ID to monitor',
+              description: 'ID de la playlist Spotify à surveiller',
             },
           },
         },
       },
       {
         key: 'now_playing_changed',
-        description: 'Triggered when the currently playing track changes',
+        description: 'Changement du morceau actuellement lu',
         configSchema: {
           type: 'object',
           properties: {
             artistFilter: {
               type: 'string',
-              description: 'Filter by artist name (optional)',
-            },
-          },
-        },
-      },
-      {
-        key: 'new_top_artist',
-        description: 'Triggered when a new artist appears in top artists',
-        configSchema: {
-          type: 'object',
-          properties: {
-            timeRange: {
-              type: 'string',
-              enum: ['short_term', 'medium_term', 'long_term'],
-              default: 'short_term',
-              description: 'Time range for top artists',
+              description: 'Filtrer par nom d\'artiste (optionnel)',
             },
           },
         },
       },
       {
         key: 'new_playlist_created',
-        description: 'Triggered when a new playlist is created',
+        description: 'Nouvelle playlist est créée',
         configSchema: {
           type: 'object',
           properties: {},
@@ -622,21 +607,21 @@ const serviceSeeds: ServiceSeed[] = [
     reactions: [
       {
         key: 'add_to_playlist',
-        description: 'Add a track to a specific playlist',
+        description: 'Ajouter un morceau à une playlist',
         configSchema: {
           type: 'object',
           required: ['playlistId'],
           properties: {
             playlistId: {
               type: 'string',
-              description: 'Spotify playlist ID to add tracks to',
+              description: 'ID de la playlist Spotify où ajouter les morceaux',
             },
           },
         },
       },
       {
         key: 'like_song',
-        description: 'Like/save the current track',
+        description: 'Aimer/sauvegarder le morceau actuel',
         configSchema: {
           type: 'object',
           properties: {},
@@ -644,53 +629,33 @@ const serviceSeeds: ServiceSeed[] = [
       },
       {
         key: 'create_playlist',
-        description: 'Create a new playlist',
+        description: 'Créer une nouvelle playlist',
         configSchema: {
           type: 'object',
           required: ['playlistName'],
           properties: {
             playlistName: {
               type: 'string',
-              description: 'Name for the new playlist',
+              description: 'Nom de la nouvelle playlist',
             },
             description: {
               type: 'string',
-              description: 'Description for the new playlist',
+              description: 'Description de la nouvelle playlist',
             },
             public: {
               type: 'boolean',
               default: false,
-              description: 'Make the playlist public',
+              description: 'Rendre la playlist publique',
             },
           },
         },
       },
       {
         key: 'follow_artist',
-        description: 'Follow an artist',
+        description: 'Suivre un artiste',
         configSchema: {
           type: 'object',
           properties: {},
-        },
-      },
-      {
-        key: 'send_webhook',
-        description: 'Send Spotify activity details to a webhook URL',
-        configSchema: {
-          type: 'object',
-          required: ['webhookUrl'],
-          properties: {
-            webhookUrl: {
-              type: 'string',
-              format: 'uri',
-              description: 'Webhook URL to send the Spotify data',
-            },
-            includeAlbum: {
-              type: 'boolean',
-              description: 'Include album information in payload',
-              default: true,
-            },
-          },
         },
       },
     ],
