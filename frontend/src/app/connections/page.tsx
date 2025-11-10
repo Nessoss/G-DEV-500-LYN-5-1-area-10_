@@ -353,8 +353,7 @@ export default function ConnectionsPage() {
             <CardContent className="space-y-4">
               <p className="text-foreground/70 leading-relaxed">
                 Autorisez AREA51 à accéder à votre compte Discord pour inviter le bot sur vos serveurs. Une fois cette
-                étape faite, choisissez le serveur et le salon directement dans la configuration de vos areas (les
-                champs `guildId` et `channelId` disposent désormais de listes déroulantes).
+                étape faite, choisissez le serveur et le salon directement dans la configuration de vos areas.
               </p>
 
               <ul className="space-y-2 text-sm text-foreground/70">
