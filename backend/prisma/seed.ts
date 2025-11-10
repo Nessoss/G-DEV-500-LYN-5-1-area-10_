@@ -476,18 +476,18 @@ const serviceSeeds: ServiceSeed[] = [
     actions: [
       {
         key: 'temperature_below_x',
-        description: 'Triggered when temperature is below a threshold',
+        description: 'Déclenchée lorsque la température est en dessous d\'un seuil',
         configSchema: {
           type: 'object',
           required: ['city', 'threshold'],
           properties: {
             city: {
               type: 'string',
-              description: 'City name (e.g., Paris, London, New York)',
+              description: 'Nom de la ville (ex: Paris, Londres, New York)',
             },
             threshold: {
               type: 'number',
-              description: 'Temperature threshold in Celsius',
+              description: 'Seuil de température en Celsius',
               minimum: -50,
               maximum: 60,
             },
@@ -496,19 +496,19 @@ const serviceSeeds: ServiceSeed[] = [
       },
       {
         key: 'weather_condition_is',
-        description: 'Triggered when current weather matches a condition',
+        description: 'Déclenchée lorsque la météo actuelle correspond à une condition',
         configSchema: {
           type: 'object',
           required: ['city', 'condition'],
           properties: {
             city: {
               type: 'string',
-              description: 'City name (e.g., Paris, London, New York)',
+              description: 'Nom de la ville (ex: Paris, Londres, New York)',
             },
             condition: {
               type: 'string',
               enum: ['Clear', 'Clouds', 'Rain', 'Drizzle', 'Snow', 'Thunderstorm', 'Mist', 'Fog'],
-              description: 'Weather condition to monitor',
+              description: 'Condition météorologique à surveiller',
             },
           },
         },
@@ -517,7 +517,7 @@ const serviceSeeds: ServiceSeed[] = [
     reactions: [
       {
         key: 'send_webhook',
-        description: 'Send weather data to a webhook URL',
+        description: 'Envoyer les données météorologiques vers une URL de webhook',
         configSchema: {
           type: 'object',
           required: ['webhookUrl'],
@@ -525,14 +525,14 @@ const serviceSeeds: ServiceSeed[] = [
             webhookUrl: {
               type: 'string',
               format: 'uri',
-              description: 'Webhook URL to send the weather data',
+              description: 'URL du webhook pour envoyer les données météo',
             },
           },
         },
       },
       {
         key: 'log_activity',
-        description: 'Log weather activity to console/logs',
+        description: 'Consigner l\'activité météorologique dans les journaux',
         configSchema: {
           type: 'object',
           properties: {
@@ -540,7 +540,7 @@ const serviceSeeds: ServiceSeed[] = [
               type: 'string',
               enum: ['info', 'debug', 'verbose'],
               default: 'info',
-              description: 'Log level for the activity',
+              description: 'Niveau de journalisation pour l\'activité',
             },
           },
         },
