@@ -348,7 +348,3 @@ Pour en savoir plus sur l'utilisation de ces technologies dans le projet :
 - [[Documentation technique]] - Architecture détaillée du projet
 - [[Documentation du code]] - Implémentation et organisation du code
 - [[Guide de démarrage]] - Installation et configuration
-
----
-
-[[Présentation de la Documentation du Projet Area51|� Retour a l'accueil]]
