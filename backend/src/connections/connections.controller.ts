@@ -1,10 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Logger,
   Param,
   Post,
+  Query,
   Req,
+  Res,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,16 +22,14 @@ import {
   ApiUnauthorizedResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { ConnectionsService } from './connections.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
-import { CompleteGithubDto } from './dto/complete-github.dto';
 import { CompleteDiscordDto } from './dto/complete-discord.dto';
 import {
   ConnectionsListResponseDto,
   GithubAuthorizeResponseDto,
-  GithubConnectionResponseDto,
   DiscordAuthorizeResponseDto,
   DiscordConnectionResponseDto,
   DiscordGuildListResponseDto,
@@ -38,15 +40,18 @@ import {
   ErrorResponseDto,
   ValidationErrorResponseDto,
 } from '../common/dto/error-response.dto';
+import { ProviderAccountAlreadyConnectedError } from './connections.service';
 
 @ApiTags('connections')
 @ApiBearerAuth()
 @Controller('connections')
 export class ConnectionsController {
+  private readonly logger = new Logger(ConnectionsController.name);
+
   constructor(private readonly connectionsService: ConnectionsService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post('github/start')
+  @Get('github/start')
   @ApiOperation({
     summary: 'Initier la connexion OAuth GitHub',
     description:
@@ -62,51 +67,126 @@ export class ConnectionsController {
   ): Promise<GithubAuthorizeResponseDto> {
     const user = request.user as JwtPayload;
     const userId = parseInt(user.sub, 10);
-    return this.connectionsService.startGithubConnection(userId);
+    const frontendOrigin =
+      request.get('x-frontend-origin') ?? undefined;
+    return this.connectionsService.startGithubConnection(
+      userId,
+      frontendOrigin,
+    );
+  }
+
+  @Get('github/callback')
+  @ApiOperation({
+    summary: 'Callback OAuth GitHub',
+    description:
+      'Ferme la fenêtre contextuelle GitHub et informe la page principale du succès ou de l’erreur.',
+  })
+  @ApiOkResponse({
+    description: 'Réponse HTML notifiant la fenêtre principale',
+  })
+  async githubCallback(
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query('code') code?: string,
+    @Query('state') state?: string,
+  ): Promise<void> {
+    const redirectOrigin =
+      state && typeof state === 'string'
+        ? this.connectionsService.getStateRedirectOrigin(
+            state,
+            'github',
+          )
+        : undefined;
+
+    if (!code || !state) {
+      return this.redirectToFrontendOAuthResult(response, request, {
+        provider: 'github',
+        status: 'error',
+        reason: 'invalid_request',
+        redirectOrigin,
+      });
+    }
+
+    try {
+      await this.connectionsService.completeGithubConnection(code, state);
+      return this.redirectToFrontendOAuthResult(response, request, {
+        provider: 'github',
+        status: 'success',
+        redirectOrigin,
+      });
+    } catch (error) {
+      if (error instanceof ProviderAccountAlreadyConnectedError) {
+        return this.redirectToFrontendOAuthResult(response, request, {
+          provider: 'github',
+          status: 'error',
+          reason: 'already_linked',
+          redirectOrigin,
+        });
+      }
+
+      this.logger.error(
+        `GitHub callback failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return this.redirectToFrontendOAuthResult(response, request, {
+        provider: 'github',
+        status: 'error',
+        reason: 'server_error',
+        redirectOrigin,
+      });
+    }
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('github/complete')
+  @Delete('github')
   @ApiOperation({
-    summary: 'Finaliser la connexion GitHub',
-    description:
-      'Échange le code d’autorisation contre des jetons et enregistre le compte connecté.',
+    summary: 'Déconnecter GitHub',
+    description: 'Révoque le token puis supprime la connexion GitHub.',
   })
-  @ApiBody({ type: CompleteGithubDto })
-  @ApiOkResponse({
-    description: 'Compte GitHub connecté avec succès',
-    type: GithubConnectionResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'State invalide ou code d’autorisation refusé',
-    schema: {
-      oneOf: [
-        { $ref: getSchemaPath(ValidationErrorResponseDto) },
-        { $ref: getSchemaPath(ErrorResponseDto) },
-      ],
-    },
-  })
+  @ApiOkResponse({ description: 'Connexion GitHub supprimée.' })
   @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
-  async completeGithub(
+  async disconnectGithub(
     @Req() request: Request,
-    @Body(new ValidationPipe({ transform: true }))
-    body: CompleteGithubDto,
-  ): Promise<GithubConnectionResponseDto> {
+  ): Promise<{ success: boolean }> {
     const user = request.user as JwtPayload;
     const userId = parseInt(user.sub, 10);
-    const result = await this.connectionsService.completeGithubConnection(
-      userId,
-      body.code,
-      body.state,
-    );
-    return {
-      success: true,
-      provider: 'github',
-      account: {
-        login: result.login,
-        avatarUrl: result.avatarUrl ?? null,
-      },
-    };
+    await this.connectionsService.disconnectGithubAccount(userId);
+    return { success: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('discord')
+  @ApiOperation({
+    summary: 'Déconnecter Discord',
+    description: 'Supprime la connexion Discord pour l’utilisateur authentifié.',
+  })
+  @ApiOkResponse({ description: 'Connexion Discord supprimée.' })
+  @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
+  async disconnectDiscord(
+    @Req() request: Request,
+  ): Promise<{ success: boolean }> {
+    const user = request.user as JwtPayload;
+    const userId = parseInt(user.sub, 10);
+    await this.connectionsService.disconnectDiscordAccount(userId);
+    return { success: true };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('spotify')
+  @ApiOperation({
+    summary: 'Déconnecter Spotify',
+    description: 'Supprime la connexion Spotify pour l’utilisateur authentifié.',
+  })
+  @ApiOkResponse({ description: 'Connexion Spotify supprimée.' })
+  @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
+  async disconnectSpotify(
+    @Req() request: Request,
+  ): Promise<{ success: boolean }> {
+    const user = request.user as JwtPayload;
+    const userId = parseInt(user.sub, 10);
+    await this.connectionsService.disconnectSpotifyAccount(userId);
+    return { success: true };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -245,6 +325,47 @@ export class ConnectionsController {
         connectedAt: connection.connectedAt ?? null,
         details: connection.details ?? null,
       })),
+    };
+  }
+  private redirectToFrontendOAuthResult(
+    res: Response,
+    request: Request,
+    payload: {
+      provider: string;
+      status: 'success' | 'error';
+      reason?: string;
+      redirectOrigin?: string;
+    },
+  ): void {
+    const targetOrigin =
+      payload.redirectOrigin ??
+      this.getFrontendTargets(request).origin;
+    const resultUrl = new URL('/connections/github/result', targetOrigin);
+    resultUrl.searchParams.set('provider', payload.provider);
+    resultUrl.searchParams.set('status', payload.status);
+    if (payload.reason) {
+      resultUrl.searchParams.set('reason', payload.reason);
+    }
+    res.redirect(resultUrl.toString());
+  }
+
+  private getFrontendTargets(
+    request: Request,
+  ): { origin: string; connectionsUrl: string } {
+    const configured = process.env.FRONTEND_URL;
+    const fallbackOrigin = `${request.protocol}://${request.get('host')}`;
+
+    if (configured) {
+      const url = new URL(configured);
+      return {
+        origin: url.origin,
+        connectionsUrl: new URL('/connections', url).toString(),
+      };
+    }
+
+    return {
+      origin: fallbackOrigin,
+      connectionsUrl: `${fallbackOrigin}/connections`,
     };
   }
 }

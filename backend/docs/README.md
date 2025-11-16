@@ -28,8 +28,8 @@
   - `message_with_attachment` → déclenche lorsqu’une pièce jointe est détectée (filtres par MIME possibles).
 - **Réactions Discord** utilisables dans un Area (via le service Discord ou depuis GitHub grâce à la délégation) :
   - `send_channel_message` → envoie un message texte dans un salon (support placeholders `{{activity.title}}`, mentions d’utilisateurs/roles).
-  - `send_embed_message` → publie un embed riche (titre, description, couleur, URL, footer).
-  - `add_reaction` → ajoute un emoji à un message (unicode ou custom `nom:id`).
+  - `create_thread` → ouvre un fil dans un salon avec un nom et un premier message dynamiques.
+  - `send_direct_message` → envoie un DM à un utilisateur (ID direct ou via template tel que `{{activity.author.id}}`).
 - **Connexion utilisateur** :
   - `POST /connections/discord/start` → fournit l’URL d’autorisation (scopes `identify guilds bot`, permissions réglées via `DISCORD_BOT_PERMISSIONS`).
   - Après redirection Discord, POST `code`, `state`, `guildId` sur `POST /connections/discord/complete` pour enregistrer l’accès.

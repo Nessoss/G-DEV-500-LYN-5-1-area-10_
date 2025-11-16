@@ -4,6 +4,7 @@ import { GithubService } from './github.service';
 import { GithubController } from './github.controller';
 import { AuthModule } from '../auth/auth.module';
 import { DiscordModule } from '../discord/discord.module';
+import { GithubApiService } from './github-api.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { DiscordModule } from '../discord/discord.module';
     DiscordModule,
   ],
   controllers: [GithubController],
-  providers: [GithubService],
+  providers: [GithubService, GithubApiService],
   exports: [GithubService],
 })
 export class GithubModule {}

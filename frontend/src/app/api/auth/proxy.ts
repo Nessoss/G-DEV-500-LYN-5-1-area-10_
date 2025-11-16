@@ -49,6 +49,11 @@ export async function proxyAuthRequest(
     headers.set("cookie", cookies);
   }
 
+  const frontendOrigin = request.headers.get("x-frontend-origin")
+  if (frontendOrigin) {
+    headers.set("x-frontend-origin", frontendOrigin)
+  }
+
   try {
     const backendResponse = await fetch(targetUrl, {
       method,

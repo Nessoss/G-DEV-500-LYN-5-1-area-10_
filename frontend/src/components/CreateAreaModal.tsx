@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowRight, Layers, Settings, Sparkles, X, Zap, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,6 +23,12 @@ import { cn } from "@/lib/utils"
 
 let discordGuildCache: DiscordGuild[] | null = null
 const discordChannelCache = new Map<string, DiscordChannel[]>()
+
+type TemplateSuggestion = {
+  title: string
+  template: string
+  description?: string
+}
 
 interface CreateAreaModalProps {
   isOpen: boolean
@@ -117,6 +123,8 @@ export function CreateAreaModal({
   const selectedAction = selectedActionService?.actions.find((a) => a.id === formData.actionId)
   const selectedReactionService = services.find((s) => s.id === formData.reactionServiceId)
   const selectedReaction = selectedReactionService?.reactions.find((r) => r.id === formData.reactionId)
+  const actionServiceSlug = selectedActionService?.slug
+  const reactionServiceSlug = selectedReactionService?.slug
   const servicesRequiringConnection = services.filter(
     (service) => service.requiresConnection && !service.connected,
   )
@@ -276,6 +284,70 @@ export function CreateAreaModal({
     }
     return `Quand "${selectedAction.description}" sur ${selectedActionService.name}, alors "${selectedReaction.description}" sur ${selectedReactionService.name}`
   }, [selectedAction, selectedReaction, selectedActionService, selectedReactionService])
+
+  const discordMessageSuggestions = useMemo<TemplateSuggestion[]>(() => {
+    if (
+      !selectedAction ||
+      actionServiceSlug !== "github" ||
+      reactionServiceSlug !== "discord" ||
+      selectedReaction?.key !== "send_channel_message"
+    ) {
+      return []
+    }
+
+    const base: TemplateSuggestion[] = [
+      {
+        title: "Résumé express",
+        description: "Annonce courte avec lien direct vers GitHub.",
+        template:
+          "Nouvelle activité GitHub sur {{activity.owner}}/{{activity.repo}} : **{{activity.title}}**\n{{activity.url}}",
+      },
+    ]
+
+    switch (selectedAction.key) {
+      case "new_issue":
+        base.unshift({
+          title: "Annonce d’issue",
+          description: "Rappelle le numéro, l’auteur et la description.",
+          template:
+            "🆕 Nouvelle issue #{{activity.number}} ouverte sur {{activity.owner}}/{{activity.repo}}\nAuteur : {{activity.author}}\nTitre : {{activity.title}}\nDescription : {{activity.body}}\n{{activity.url}}",
+        })
+        break
+      case "new_pull_request":
+        base.unshift({
+          title: "Nouvelle pull request",
+          description: "Mentionne l’auteur et invite à la review.",
+          template:
+            "🔁 Pull request #{{activity.number}} par {{activity.author}} sur {{activity.owner}}/{{activity.repo}}\nTitre : {{activity.title}}\nAperçu : {{activity.body}}\nLien : {{activity.url}}\nMerci de lancer une review ✅",
+        })
+        break
+      case "new_release":
+        base.unshift({
+          title: "Annonce de release",
+          description: "Résumé pour un salon #annonces.",
+          template:
+            "🚀 Nouvelle release sur {{activity.owner}}/{{activity.repo}}\nNom : {{activity.title}}\nNotes : {{activity.body}}\nTéléchargez-la ici 👉 {{activity.url}}",
+        })
+        break
+      default:
+        break
+    }
+
+    return base
+  }, [selectedAction, actionServiceSlug, reactionServiceSlug, selectedReaction?.key])
+
+  const handleApplyDiscordSuggestion = useCallback(
+    (template: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        reactionConfig: {
+          ...prev.reactionConfig,
+          contentTemplate: template,
+        },
+      }))
+    },
+    [setFormData],
+  )
 
   const primaryActionLabel = isEditing ? "Mettre à jour l'Area" : "Créer l'Area"
   const primaryActionLoading = isEditing ? "Mise à jour en cours…" : "Création en cours…"
@@ -456,6 +528,17 @@ export function CreateAreaModal({
                         config={formData.reactionConfig}
                         onChange={(config) => setFormData({ ...formData, reactionConfig: config })}
                       />
+                      {discordMessageSuggestions.length > 0 && (
+                        <TemplateSuggestionList
+                          suggestions={discordMessageSuggestions}
+                          onApply={handleApplyDiscordSuggestion}
+                          currentValue={
+                            typeof formData.reactionConfig?.contentTemplate === "string"
+                              ? (formData.reactionConfig.contentTemplate as string)
+                              : ""
+                          }
+                        />
+                      )}
                     </fieldset>
                   )}
                 </SectionShell>
@@ -946,6 +1029,69 @@ function ConfigFields({
 
         return null
       })}
+    </div>
+  )
+}
+
+function TemplateSuggestionList({
+  suggestions,
+  onApply,
+  currentValue,
+}: {
+  suggestions: TemplateSuggestion[]
+  onApply: (template: string) => void
+  currentValue: string
+}) {
+  if (suggestions.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="rounded-2xl border border-border/50 bg-background/80 p-4 shadow-inner">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
+            Suggestions GitHub → Discord
+          </p>
+          <p className="text-xs text-muted-foreground">Cliquez pour remplir automatiquement le message Discord.</p>
+        </div>
+        <Sparkles className="h-4 w-4 text-primary" />
+      </div>
+      <div className="space-y-3">
+        {suggestions.map((suggestion) => {
+          const isActive = currentValue === suggestion.template
+          return (
+            <button
+              key={suggestion.title}
+              type="button"
+              onClick={() => onApply(suggestion.template)}
+              className={cn(
+                "w-full rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/40",
+                isActive
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/70 bg-background/80 hover:border-primary/40 hover:bg-primary/5",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{suggestion.title}</p>
+                  {suggestion.description && (
+                    <p className="text-xs text-muted-foreground">{suggestion.description}</p>
+                  )}
+                </div>
+                {isActive && (
+                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+                    Utilisé
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 whitespace-pre-line text-xs font-mono text-muted-foreground">
+                {suggestion.template}
+              </p>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

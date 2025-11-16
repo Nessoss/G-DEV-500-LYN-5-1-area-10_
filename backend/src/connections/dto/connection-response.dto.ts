@@ -15,28 +15,6 @@ export class GithubAuthorizeResponseDto {
   state!: string;
 }
 
-export class GithubAccountDto {
-  @ApiProperty({ example: 'octocat' })
-  login!: string;
-
-  @ApiProperty({
-    example: 'https://avatars.githubusercontent.com/u/583231?v=4',
-    nullable: true,
-  })
-  avatarUrl!: string | null;
-}
-
-export class GithubConnectionResponseDto {
-  @ApiProperty({ example: true })
-  success!: boolean;
-
-  @ApiProperty({ example: 'github' })
-  provider!: string;
-
-  @ApiProperty({ type: GithubAccountDto })
-  account!: GithubAccountDto;
-}
-
 export class DiscordAuthorizeResponseDto {
   @ApiProperty({
     example:

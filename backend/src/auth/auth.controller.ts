@@ -14,6 +14,7 @@ import {
   BadRequestException,
   ValidationPipe,
   Optional,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -29,6 +30,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { OAuth2Service } from './oauth2.service';
 import { RegisterDto } from './dto/register.dto';
@@ -43,6 +45,7 @@ import { RateLimitService } from './rate-limit.service';
 import { GoogleOAuthDto } from './dto/google-oauth.dto';
 import { UsersService } from '../users/users.service';
 import { AuthConfigService } from './auth.config';
+import type { JwtPayload } from './interfaces/jwt-payload.interface';
 import {
   ErrorResponseDto,
   ValidationErrorResponseDto,
@@ -196,6 +199,40 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) response: Response): Promise<void> {
     this.authService.clearRefreshTokenCookie(response);
     this.logger.log('Déconnexion réussie');
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt-refresh'))
+  @ApiOperation({
+    summary: 'Renouveler un jeton d’accès à l’aide du cookie de rafraîchissement',
+    description:
+      'Valide le jeton de rafraîchissement et émet un nouveau couple access/refresh tout en mettant à jour le cookie.',
+  })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginResponseDto> {
+    const payload = request.user as JwtPayload | undefined;
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Utilisateur non authentifié.');
+    }
+
+    const userId = Number.parseInt(payload.sub, 10);
+    const user = Number.isNaN(userId)
+      ? null
+      : await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur introuvable.');
+    }
+
+    const tokens = await this.authService.generateTokens(user);
+    this.authService.setRefreshTokenCookie(response, tokens.refreshToken);
+
+    return this.authService.buildLoginResponse(user, tokens);
   }
 
   @Post('oauth2/google')

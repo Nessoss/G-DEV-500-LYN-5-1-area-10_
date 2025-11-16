@@ -132,3 +132,25 @@ export function getStoredAccessToken(): string | null {
     window.sessionStorage.getItem(ACCESS_TOKEN_KEY)
   );
 }
+
+export function getActiveAuthStorage(): 'local' | 'session' {
+  if (!isBrowser()) {
+    return 'local';
+  }
+
+  if (
+    window.localStorage.getItem(USER_KEY) ||
+    window.localStorage.getItem(ACCESS_TOKEN_KEY)
+  ) {
+    return 'local';
+  }
+
+  if (
+    window.sessionStorage.getItem(USER_KEY) ||
+    window.sessionStorage.getItem(ACCESS_TOKEN_KEY)
+  ) {
+    return 'session';
+  }
+
+  return 'local';
+}

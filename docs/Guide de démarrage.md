@@ -41,7 +41,7 @@ PGADMIN_PASSWORD=admin_password
 # GitHub OAuth
 NEXT_PUBLIC_GITHUB_CLIENT_ID=votre_client_id
 NEXT_PUBLIC_GITHUB_SCOPE=user:email
-NEXT_PUBLIC_GITHUB_REDIRECT_URI=http://localhost:8081/auth/callback
+NEXT_PUBLIC_GITHUB_REDIRECT_URI=http://localhost:8080/api/connections/github/callback
 
 # Google OAuth
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=votre_google_client_id

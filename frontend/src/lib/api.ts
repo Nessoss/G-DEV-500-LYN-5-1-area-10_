@@ -1,3 +1,5 @@
+import { clearAuthSession, getActiveAuthStorage, saveAuthSession } from "@/lib/auth-storage"
+import type { LoginResponse } from "@/lib/auth-client"
 import type {
   ServicesResponse,
   AreasResponse,
@@ -56,41 +58,7 @@ async function parseError(response: Response): Promise<never> {
   throw new ApiError(message, response.status, payload)
 }
 
-// Get authentication token from localStorage or sessionStorage
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null
-
-  // Try localStorage first (remember me = true)
-  const localToken = localStorage.getItem("auth_access_token")
-  if (localToken) return localToken
-
-  // Fallback to sessionStorage (remember me = false)
-  return sessionStorage.getItem("auth_access_token")
-}
-
-// Generic fetch function with auth
-async function fetchWithAuth<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getAuthToken()
-
-  const headers = new Headers(options.headers)
-  headers.set("Content-Type", "application/json")
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`)
-  }
-
-  const response = await fetch(endpoint, {
-    ...options,
-    headers,
-  })
-
-  if (!response.ok) {
-    await parseError(response)
-  }
-
+async function parseResponseBody<T>(response: Response): Promise<T> {
   if (response.status === 204 || response.status === 205) {
     return undefined as T
   }
@@ -106,6 +74,95 @@ async function fetchWithAuth<T>(
   } catch {
     return text as unknown as T
   }
+}
+
+let refreshRequest: Promise<boolean> | null = null
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false
+  }
+
+  if (!refreshRequest) {
+    refreshRequest = (async () => {
+      try {
+        const response = await fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+        })
+
+        if (!response.ok) {
+          return false
+        }
+
+        const data = (await response.json()) as LoginResponse
+        const rememberMe = getActiveAuthStorage() === "local"
+
+        saveAuthSession({
+          user: data.user,
+          accessToken: data.access_token,
+          rememberMe,
+        })
+
+        return true
+      } catch (error) {
+        console.error("Échec du rafraîchissement du jeton", error)
+        clearAuthSession()
+        return false
+      } finally {
+        refreshRequest = null
+      }
+    })()
+  }
+
+  return refreshRequest
+}
+
+// Get authentication token from localStorage or sessionStorage
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null
+
+  // Try localStorage first (remember me = true)
+  const localToken = localStorage.getItem("auth_access_token")
+  if (localToken) return localToken
+
+  // Fallback to sessionStorage (remember me = false)
+  return sessionStorage.getItem("auth_access_token")
+}
+
+// Generic fetch function with auth
+async function fetchWithAuth<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  allowRetry = true
+): Promise<T> {
+  const token = getAuthToken()
+
+  const headers = new Headers(options.headers)
+  headers.set("Content-Type", "application/json")
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  const response = await fetch(endpoint, {
+    ...options,
+    credentials: options.credentials ?? "include",
+    headers,
+  })
+
+  if (response.ok) {
+    return parseResponseBody<T>(response)
+  }
+
+  if (response.status === 401 && allowRetry) {
+    const refreshed = await refreshAccessToken()
+    if (refreshed) {
+      return fetchWithAuth<T>(endpoint, options, false)
+    }
+  }
+
+  return await parseError(response)
 }
 
 // API functions
@@ -181,30 +238,13 @@ export async function startGithubConnection(): Promise<{
   state: string
 }> {
   return fetchWithAuth<{ authorizeUrl: string; state: string }>(
-    "/api/connections/github/start",
-    {
-      method: "POST",
-    }
+    "/api/connections/github/start"
   )
 }
 
-/**
- * Finalise la connexion GitHub depuis le code reçu dans le callback.
- */
-export async function completeGithubConnection(payload: {
-  code: string
-  state: string
-}): Promise<{
-  success: boolean
-  provider: string
-  account: {
-    login: string
-    avatarUrl?: string | null
-  }
-}> {
-  return fetchWithAuth("/api/connections/github/complete", {
-    method: "POST",
-    body: JSON.stringify(payload),
+export async function disconnectGithubConnection(): Promise<void> {
+  await fetchWithAuth<void>('/api/connections/github', {
+    method: 'DELETE',
   })
 }
 
@@ -221,6 +261,12 @@ export function startSpotifyConnection(): void {
       window.location.href = '/api/auth/spotify'
     }
   }
+}
+
+export async function disconnectSpotifyConnection(): Promise<void> {
+  await fetchWithAuth<void>('/api/connections/spotify', {
+    method: 'DELETE',
+  })
 }
 
 /**
@@ -257,6 +303,12 @@ export async function startDiscordConnection(): Promise<{
       method: "POST",
     }
   )
+}
+
+export async function disconnectDiscordConnection(): Promise<void> {
+  await fetchWithAuth<void>('/api/connections/discord', {
+    method: 'DELETE',
+  })
 }
 
 /**

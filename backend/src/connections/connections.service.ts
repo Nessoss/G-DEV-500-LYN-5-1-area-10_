@@ -61,6 +61,7 @@ interface StoredState {
   userId: number;
   provider: 'github' | 'discord';
   expiresAt: number;
+  redirectOrigin?: string;
 }
 
 interface ConnectionStatus {
@@ -68,6 +69,16 @@ interface ConnectionStatus {
   connected: boolean;
   connectedAt?: string | null;
   details?: Record<string, unknown>;
+}
+
+export class ProviderAccountAlreadyConnectedError extends Error {
+  constructor(
+    public readonly provider: string,
+    message = 'Provider account is already linked to another user.',
+  ) {
+    super(message);
+    this.name = 'ProviderAccountAlreadyConnectedError';
+  }
 }
 
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
@@ -94,11 +105,17 @@ export class ConnectionsService {
     private readonly discordService: DiscordService,
   ) {}
 
-  async startGithubConnection(userId: number): Promise<GithubAuthorizeResult> {
-    const { clientId, redirectUri, scope } = this.getGithubConfiguration();
+  async startGithubConnection(
+    userId: number,
+    redirectOrigin?: string,
+  ): Promise<GithubAuthorizeResult> {
+    const { clientId, redirectUri, scope, prompt } =
+      this.getGithubConfiguration();
 
     const state = randomUUID();
-    this.storeState(state, userId, 'github');
+    this.storeState(state, userId, 'github', {
+      redirectOrigin: this.normalizeFrontendOrigin(redirectOrigin),
+    });
 
     const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
     authorizeUrl.searchParams.set('client_id', clientId);
@@ -107,6 +124,9 @@ export class ConnectionsService {
       authorizeUrl.searchParams.set('redirect_uri', redirectUri);
     }
     authorizeUrl.searchParams.set('scope', scope);
+    if (prompt) {
+      authorizeUrl.searchParams.set('prompt', prompt);
+    }
 
     return {
       authorizeUrl: authorizeUrl.toString(),
@@ -115,19 +135,29 @@ export class ConnectionsService {
   }
 
   async completeGithubConnection(
-    userId: number,
     code: string,
     state: string,
-  ): Promise<{ login: string; avatarUrl?: string | null }> {
+  ): Promise<{ userId: number; login: string; avatarUrl?: string | null }> {
+    const storedState = this.consumeStateEntry(state, 'github');
+    const userId = storedState.userId;
+
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new BadRequestException('Utilisateur introuvable.');
     }
 
-    this.consumeState(state, userId, 'github');
-
     const tokens = await this.exchangeGithubCode(code);
     const profile = await this.fetchGithubProfile(tokens.access_token);
+
+    const existingAccount =
+      await this.usersService.findProviderAccountByProviderUserId(
+        GITHUB_PROVIDER_KEY,
+        profile.id.toString(),
+      );
+
+    if (existingAccount && existingAccount.userId !== userId) {
+      throw new ProviderAccountAlreadyConnectedError(GITHUB_PROVIDER_KEY);
+    }
 
     await this.usersService.upsertProviderAccount({
       userId,
@@ -145,6 +175,7 @@ export class ConnectionsService {
     );
 
     return {
+      userId,
       login: profile.login,
       avatarUrl: profile.avatar_url ?? null,
     };
@@ -205,10 +236,22 @@ export class ConnectionsService {
       throw new BadRequestException('Utilisateur introuvable.');
     }
 
-    this.consumeState(state, userId, 'discord');
+    this.consumeStateEntry(state, 'discord', userId);
 
     const tokens = await this.exchangeDiscordCode(code);
     const profile = await this.fetchDiscordProfile(tokens.access_token);
+
+    const existingAccount =
+      await this.usersService.findProviderAccountByProviderUserId(
+        DISCORD_PROVIDER_KEY,
+        profile.id,
+      );
+
+    if (existingAccount && existingAccount.userId !== userId) {
+      throw new BadRequestException(
+        'Ce compte Discord est déjà connecté via un autre utilisateur. Déconnectez-le avant de recommencer.',
+      );
+    }
 
     let guildDetails: DiscordGuildSummary | null = null;
     if (guildId) {
@@ -303,11 +346,39 @@ export class ConnectionsService {
     ];
   }
 
+  async disconnectGithubAccount(userId: number): Promise<void> {
+    const account = await this.usersService.findProviderAccount(
+      userId,
+      GITHUB_PROVIDER_KEY,
+    );
+
+    if (!account) {
+      return;
+    }
+
+    await this.revokeGithubToken(account.accessToken).catch((error) =>
+      this.logger.warn(
+        `Unable to revoke GitHub token for user ${userId}: ${error.message}`,
+      ),
+    );
+
+    await this.removeProviderAccount(userId, GITHUB_PROVIDER_KEY);
+  }
+
+  async disconnectDiscordAccount(userId: number): Promise<void> {
+    await this.removeProviderAccount(userId, DISCORD_PROVIDER_KEY);
+  }
+
+  async disconnectSpotifyAccount(userId: number): Promise<void> {
+    await this.removeProviderAccount(userId, SPOTIFY_PROVIDER_KEY);
+  }
+
   private getGithubConfiguration(): {
     clientId: string;
     clientSecret: string;
     redirectUri: string;
     scope: string;
+    prompt?: string;
   } {
     const clientId =
       process.env.GITHUB_OAUTH_CLIENT_ID ??
@@ -321,6 +392,10 @@ export class ConnectionsService {
       process.env.GITHUB_OAUTH_SCOPE ??
       process.env.NEXT_PUBLIC_GITHUB_SCOPE ??
       'repo user';
+    const prompt =
+      process.env.GITHUB_OAUTH_PROMPT ??
+      process.env.NEXT_PUBLIC_GITHUB_OAUTH_PROMPT ??
+      'select_account';
 
     if (!clientId) {
       throw new InternalServerErrorException(
@@ -340,7 +415,31 @@ export class ConnectionsService {
       );
     }
 
-    return { clientId, clientSecret, redirectUri, scope };
+    return { clientId, clientSecret, redirectUri, scope, prompt };
+  }
+
+  private async revokeGithubToken(accessToken: string): Promise<void> {
+    const { clientId, clientSecret } = this.getGithubConfiguration();
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      'base64',
+    );
+
+    const response = await fetch(`https://api.github.com/applications/${clientId}/grant`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ access_token: accessToken }),
+    });
+
+    if (!response.ok && response.status !== 404) {
+      const errorText = await response.text();
+      throw new Error(
+        `GitHub revoke returned ${response.status} ${response.statusText}: ${errorText}`,
+      );
+    }
   }
 
   private async exchangeGithubCode(
@@ -678,20 +777,65 @@ export class ConnectionsService {
     state: string,
     userId: number,
     provider: 'github' | 'discord',
+    metadata: { redirectOrigin?: string } = {},
   ): void {
     this.pruneExpiredStates();
     this.stateStore.set(state, {
       userId,
       provider,
       expiresAt: Date.now() + this.stateTtlMs,
+      ...metadata,
     });
   }
 
-  private consumeState(
+  private normalizeFrontendOrigin(
+    origin?: string | null,
+  ): string | undefined {
+    if (!origin) {
+      return undefined;
+    }
+
+    try {
+      const parsed = new URL(origin);
+      if (
+        parsed.protocol !== 'http:' &&
+        parsed.protocol !== 'https:'
+      ) {
+        return undefined;
+      }
+      return parsed.origin;
+    } catch {
+      return undefined;
+    }
+  }
+
+  getStateRedirectOrigin(
     state: string,
-    userId: number,
     provider: 'github' | 'discord',
-  ): void {
+  ): string | undefined {
+    const entry = this.stateStore.get(state);
+
+    if (!entry) {
+      return undefined;
+    }
+
+    if (entry.provider !== provider) {
+      return undefined;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      this.stateStore.delete(state);
+      return undefined;
+    }
+
+    return entry.redirectOrigin;
+  }
+
+  private consumeStateEntry(
+    state: string,
+    provider: 'github' | 'discord',
+    userId?: number,
+  ): StoredState {
     const entry = this.stateStore.get(state);
 
     if (!entry) {
@@ -703,7 +847,7 @@ export class ConnectionsService {
       throw new BadRequestException('State provider mismatch');
     }
 
-    if (entry.userId !== userId) {
+    if (typeof userId === 'number' && entry.userId !== userId) {
       this.stateStore.delete(state);
       throw new BadRequestException(
         'State does not match the authenticated user',
@@ -716,6 +860,30 @@ export class ConnectionsService {
     }
 
     this.stateStore.delete(state);
+    return entry;
+  }
+
+  private async removeProviderAccount(
+    userId: number,
+    provider: string,
+  ): Promise<void> {
+    const existing = await this.usersService.findProviderAccount(
+      userId,
+      provider,
+    );
+
+    if (!existing) {
+      return;
+    }
+
+    await this.database.providerAccount.delete({
+      where: {
+        userId_provider: {
+          userId,
+          provider,
+        },
+      },
+    });
   }
 
   private pruneExpiredStates(): void {
