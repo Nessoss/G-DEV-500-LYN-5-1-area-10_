@@ -35,6 +35,7 @@ import {
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaStatusDto } from './dto/update-area-status.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
+import { LinkSlackDto } from './dto/link-slack.dto';
 import {
   AreaResponseDto,
   AreasListResponseDto,
@@ -169,6 +170,17 @@ export class AreasController {
     @Body() dto: UpdateAreaDto,
   ): Promise<AreaResponseDto> {
     return this.areasService.update(user.id, id, dto);
+  }
+
+  @Post(':id/link-slack')
+  @ApiOperation({ summary: 'Link an area to an existing Slack channel and optionally invite users' })
+  @ApiParam({ name: 'id', type: Number })
+  async linkSlack(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: LinkSlackDto,
+  ): Promise<AreaResponseDto> {
+    return this.areasService.linkToSlack(user.id, id, dto.channelId, dto.inviteUserIds ?? []);
   }
 
   @Delete(':id')

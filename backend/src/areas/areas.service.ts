@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
+import { SlackService } from '../slack/slack.service';
+import { ConfigService } from '@nestjs/config';
 import type { CreateAreaDto } from './dto/create-area.dto';
 import type { UpdateAreaStatusDto } from './dto/update-area-status.dto';
 import type { UpdateAreaDto } from './dto/update-area.dto';
@@ -29,7 +31,11 @@ type AreaWithRelations = Prisma.AreaGetPayload<{
 
 @Injectable()
 export class AreasService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly slack: SlackService,
+    private readonly config: ConfigService,
+  ) {}
 
   async create(userId: number, dto: CreateAreaDto): Promise<AreaResponseDto> {
     const [action, reaction] = await Promise.all([
@@ -69,6 +75,45 @@ export class AreasService {
       },
       include: AreasService.areaIncludes,
     });
+
+    // Slack integration behavior:
+    // - if SLACK_CHANNEL_REQUIRED=true, we treat Slack channel creation as required and rollback DB on failure
+    // - otherwise we run best-effort in background
+    const required = (this.config.get<string>('SLACK_CHANNEL_REQUIRED') ?? process.env.SLACK_CHANNEL_REQUIRED ?? 'false') === 'true';
+
+    if (required) {
+      const channel = await this.slack.createChannel(area.name, false, `Area: ${area.name}`);
+      if (!channel || !channel.id) {
+        // rollback DB creation
+        try {
+          await (this.database as any).area.delete({ where: { id: area.id } });
+        } catch (e) {
+          // ignore
+        }
+        throw new BadRequestException('Impossible de créer le canal Slack pour cette area');
+      }
+      try {
+        await (this.database as any).area.update({ where: { id: area.id }, data: { slackChannelId: channel.id } });
+      } catch (e) {
+        // ignore DB update error
+      }
+    } else {
+      // background best-effort
+      (async () => {
+        try {
+          const channel = await this.slack.createChannel(area.name, false, `Area: ${area.name}`);
+          if (channel && channel.id) {
+            try {
+              await (this.database as any).area.update({ where: { id: area.id }, data: { slackChannelId: channel.id } });
+            } catch (e) {
+              // silent
+            }
+          }
+        } catch (e) {
+          // best-effort only
+        }
+      })();
+    }
 
     return AreasService.mapArea(area);
   }
@@ -190,6 +235,31 @@ export class AreasService {
   async remove(userId: number, areaId: number): Promise<void> {
     await this.assertAreaOwnership(userId, areaId);
     await this.database.area.delete({ where: { id: areaId } });
+  }
+
+  async linkToSlack(userId: number, areaId: number, channelId: string, inviteUserIds: string[]): Promise<AreaResponseDto> {
+    await this.assertAreaOwnership(userId, areaId);
+
+    // update DB with slack channel id
+    const updated = await (this.database as any).area.update({ where: { id: areaId }, data: { slackChannelId: channelId }, include: AreasService.areaIncludes });
+
+    // try to invite users if provided
+    if (inviteUserIds && inviteUserIds.length > 0) {
+      try {
+        await this.slack.inviteUsers(channelId, inviteUserIds);
+      } catch (e) {
+        // log but don't fail the operation
+      }
+    }
+
+    // optional: post a message to the channel to announce link
+    try {
+      await this.slack.postMessage(channelId, `This Slack channel has been linked to area ${updated.name}`);
+    } catch (e) {
+      // ignore
+    }
+
+    return AreasService.mapArea(updated as any);
   }
 
   private async assertAreaOwnership(

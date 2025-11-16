@@ -97,6 +97,7 @@ model Area {
   actionId         Int
   reactionId       Int
   name             String   @db.Text
+  slackChannelId   String?  @db.Text
   enabled          Boolean  @default(true)
   actionConfig     Json?
   reactionConfig   Json?

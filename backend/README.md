@@ -123,3 +123,31 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Slack integration
+
+This project includes a basic Slack integration module (`src/slack`) that can create channels and post messages using a bot token. The integration is best-effort and requires configuration before use.
+
+1. Install new dependency:
+
+```bash
+npm install
+```
+
+2. Set environment variables in the repo root `.env`:
+
+- `SLACK_BOT_TOKEN` — your bot token (xoxb-...)
+- `SLACK_SIGNING_SECRET` — (optional) needed later for verifying incoming requests
+
+3. (Optional) Regenerate Prisma client and run migrations if you want to store `slackChannelId` on the Area model:
+
+```bash
+cd ..
+npm run backend:prisma:generate # or run the prisma:generate script from the backend package.json
+# then run migrations as appropriate
+```
+
+Notes:
+- The Slack module is provided as `SlackModule` and exported `SlackService` with helper methods.
+- The `AreasService` will attempt to create a Slack channel after creating an Area (best-effort). If you don't provide a `SLACK_BOT_TOKEN` the Slack calls are skipped.
+
