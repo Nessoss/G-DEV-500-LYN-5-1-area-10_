@@ -11,25 +11,25 @@ type Stat = {
 const stats: Stat[] = [
   {
     endValue: 100,
-    label: "Active Users",
+    label: "Utilisateurs Actifs",
     color: "light-blue",
     formatter: (value) => `${Math.round(value)}K+`,
   },
   {
     endValue: 1_200,
-    label: "Integrations",
+    label: "Intégrations",
     color: "mint",
     formatter: (value) => `${Math.round(value).toLocaleString()}+`,
   },
   {
     endValue: 50,
-    label: "Tasks Automated",
+    label: "Tâches Automatisées",
     color: "soft-yellow",
     formatter: (value) => `${Math.round(value)}M+`,
   },
   {
     endValue: 99.9,
-    label: "Uptime SLA",
+    label: "Disponibilité SLA",
     color: "light-blue",
     formatter: (value) => `${value.toFixed(1)}%`,
   },

@@ -18,31 +18,31 @@ export function FeaturesHero() {
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-light-blue/10 border border-light-blue/20 mb-8">
             <Sparkles className="w-4 h-4 text-light-blue" />
-            <span className="text-sm font-medium text-foreground">Discover the power of automation</span>
+            <span className="text-sm font-medium text-foreground">Découvrez la puissance de l&apos;automatisation</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-foreground">Features that </span>
+            <span className="text-foreground">Fonctionnalités qui </span>
             <span className="bg-gradient-to-r from-light-blue via-mint to-soft-yellow bg-clip-text text-transparent">
-              transform your workflow
+              transforment vos flux de travail
             </span>
           </h1>
 
           <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto">
-            Automate intelligently, connect without limits, and unlock your team&apos;s potential with a platform
-            engineered for efficiency.
+            Automatisez intelligemment, connectez sans limites et libérez le potentiel de votre équipe avec une plateforme
+            conçue pour l&apos;efficacité.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup">
               <Button size="lg" className="gap-2 bg-navy hover:bg-navy-dark text-white">
-                Start for free
+                Commencer gratuitement
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
             <Link href="/demo">
               <Button size="lg" variant="outline" className="gap-2 bg-transparent">
-                Watch a demo
+                Voir une démo
               </Button>
             </Link>
           </div>
@@ -51,10 +51,10 @@ export function FeaturesHero() {
         {/* Stats bar */}
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
           {[
-            { value: "500+", label: "Integrations" },
-            { value: "99.9%", label: "Uptime SLA" },
-            { value: "<1s", label: "Execution time" },
-            { value: "24/7", label: "Global support" },
+            { value: "500+", label: "Intégrations" },
+            { value: "99.9%", label: "Disponibilité SLA" },
+            { value: "<1s", label: "Temps d'exécution" },
+            { value: "24/7", label: "Support mondial" },
           ].map((stat, i) => (
             <div key={i} className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">{stat.value}</div>

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 
 export function CTASection() {
-  const benefits = ["No credit card required", "Free forever plan available", "Cancel anytime", "24/7 support"]
+  const benefits = ["Aucune carte bancaire requise", "Plan gratuit à vie disponible", "Annulation possible à tout moment", "Support 24h/24 7j/7"]
 
   return (
     <section className="relative overflow-hidden px-4 py-20 md:py-32">
@@ -16,11 +16,11 @@ export function CTASection() {
       <div className="container mx-auto">
         <div className="mx-auto max-w-4xl rounded-[2.5rem] border border-white/60 bg-white/75 px-10 py-16 text-center shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
           <h2 className="mb-6 text-balance text-4xl font-bold text-navy md:text-5xl dark:text-white">
-            Ready to transform your workflow?
+            Prêt à transformer votre flux de travail ?
           </h2>
           <p className="mb-10 text-pretty text-lg leading-relaxed text-muted-foreground md:text-xl dark:text-white/80">
-            Join over 100,000 teams already automating their work with FlowSync. Start building powerful workflows in
-            minutes.
+            Rejoignez plus de 100 000 équipes qui automatisent déjà leur travail avec AREA. Commencez à créer des flux de travail puissants en
+            quelques minutes.
           </p>
 
           <div className="mb-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -28,7 +28,7 @@ export function CTASection() {
               size="lg"
               className="group bg-navy text-white hover:bg-navy-dark dark:bg-light-blue dark:text-navy dark:hover:bg-light-blue-muted"
             >
-              Start Building Free
+              Commencer gratuitement
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button
@@ -36,7 +36,7 @@ export function CTASection() {
               variant="outline"
               className="border-navy text-navy hover:bg-navy/5 bg-transparent dark:border-white/30 dark:text-white dark:hover:bg-white/10"
             >
-              Schedule a Demo
+              Programmer une démo
             </Button>
           </div>
 
