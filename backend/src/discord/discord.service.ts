@@ -149,11 +149,11 @@ export class DiscordService {
       case 'send_channel_message':
         await this.handleSendChannelMessage(config, context);
         return;
-      case 'send_embed_message':
-        await this.handleSendEmbedMessage(config, context);
+      case 'create_thread':
+        await this.handleCreateThread(config, context);
         return;
-      case 'add_reaction':
-        await this.handleAddReaction(config, context);
+      case 'send_direct_message':
+        await this.handleSendDirectMessage(config, context);
         return;
       default:
         throw new Error(`Unsupported Discord reaction key: ${reactionKey}`);
@@ -515,7 +515,7 @@ export class DiscordService {
     await this.createMessage(channelId, messageBody);
   }
 
-  private async handleSendEmbedMessage(
+  private async handleCreateThread(
     config: Record<string, unknown>,
     context: DiscordReactionContext,
   ): Promise<void> {
@@ -525,101 +525,116 @@ export class DiscordService {
 
     if (!channelId) {
       throw new Error(
-        'Discord channelId is required for send_embed_message reaction',
+        'Discord channelId is required for create_thread reaction',
       );
     }
 
-    const descriptionTemplate = this.ensureString(
-      config.descriptionTemplate,
+    const threadNameTemplate =
+      this.ensureString(config.threadNameTemplate) ??
+      'Nouveau fil {{activity.title}}';
+    const threadName = this.ensureNonEmpty(
+      this.renderTemplate(threadNameTemplate, context).slice(0, 100),
+      'threadNameTemplate',
     );
-    if (!descriptionTemplate) {
-      throw new Error(
-        'descriptionTemplate is required for send_embed_message reaction',
-      );
-    }
 
-    const embed: Record<string, unknown> = {
-      description: this.ensureNonEmpty(
-        this.renderTemplate(descriptionTemplate, context),
-        'descriptionTemplate',
-      ),
+    const archiveDuration = this.normalizeArchiveDuration(
+      config.autoArchiveDuration,
+    );
+
+    const body: Record<string, unknown> = {
+      name: threadName,
+      auto_archive_duration: archiveDuration,
+      type: 11, // GUILD_PUBLIC_THREAD
     };
 
-    const titleTemplate = this.ensureString(config.titleTemplate);
-    if (titleTemplate) {
-      const resolved = this.renderTemplate(titleTemplate, context).trim();
-      if (resolved) {
-        embed.title = resolved;
+    const thread = await this.discordFetch<{ id: string }>(
+      `/channels/${channelId}/threads`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+
+    const starterTemplate = this.ensureString(
+      config.starterMessageTemplate,
+    );
+    if (starterTemplate) {
+      const starterMessage = this.renderTemplate(
+        starterTemplate,
+        context,
+      ).trim();
+      if (starterMessage) {
+        await this.createMessage(thread.id, {
+          content: starterMessage,
+        });
       }
     }
-
-    const urlTemplate = this.ensureString(config.urlTemplate);
-    if (urlTemplate) {
-      const resolved = this.renderTemplate(urlTemplate, context).trim();
-      if (resolved) {
-        embed.url = resolved;
-      }
-    }
-
-    if (typeof config.color === 'number') {
-      embed.color = config.color;
-    } else if (
-      typeof config.color === 'string' &&
-      config.color.trim().length > 0
-    ) {
-      const parsed = Number(config.color);
-      if (!Number.isNaN(parsed)) {
-        embed.color = parsed;
-      }
-    }
-
-    const footerTemplate = this.ensureString(config.footerTemplate);
-    if (footerTemplate) {
-      const resolved = this.renderTemplate(footerTemplate, context).trim();
-      if (resolved) {
-        embed.footer = { text: resolved };
-      }
-    }
-
-    await this.createMessage(channelId, {
-      embeds: [embed],
-    });
   }
 
-  private async handleAddReaction(
+  private normalizeArchiveDuration(value: unknown): number {
+    const allowed = new Set([60, 1440, 4320, 10080]);
+    if (typeof value === 'number' && allowed.has(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed) && allowed.has(parsed)) {
+        return parsed;
+      }
+    }
+    return 1440;
+  }
+
+  private async handleSendDirectMessage(
     config: Record<string, unknown>,
     context: DiscordReactionContext,
   ): Promise<void> {
-    const channelId =
-      this.ensureString(config.channelId) ??
-      this.resolveChannelIdFromContext(context);
-    const messageId =
-      this.ensureString(config.messageId) ??
-      (context.activity?.id as string | undefined);
-    const emoji = this.ensureString(config.emoji);
+    const contentTemplate = this.ensureString(config.contentTemplate);
+    const renderedContent = contentTemplate
+      ? this.renderTemplate(contentTemplate, context).trim()
+      : '';
 
-    if (!channelId || !messageId || !emoji) {
+    if (!renderedContent) {
       throw new Error(
-        'channelId, messageId and emoji are required for add_reaction reaction',
+        'contentTemplate is required for send_direct_message reaction',
       );
     }
 
-    const encoded = this.encodeEmoji(emoji);
-    await this.discordFetch(
-      `/channels/${channelId}/messages/${messageId}/reactions/${encoded}/@me`,
-      {
-        method: 'PUT',
-      },
-      false,
-    );
-  }
+    const recipientTemplate = this.ensureString(config.recipientId);
+    let resolvedRecipient = recipientTemplate
+      ? this.renderTemplate(recipientTemplate, context).trim()
+      : null;
 
-  private encodeEmoji(emoji: string): string {
-    if (emoji.includes(':')) {
-      const [name, id] = emoji.split(':');
-      return `${encodeURIComponent(name)}:${id}`;
+    if (!resolvedRecipient) {
+      const activityAuthor =
+        this.ensureString(
+          (context.activity as Record<string, unknown>)?.authorId,
+        ) ??
+        this.ensureString(
+          (context.activity as Record<string, any>)?.author?.id,
+        );
+      resolvedRecipient = activityAuthor;
     }
-    return encodeURIComponent(emoji);
+
+    if (!resolvedRecipient) {
+      throw new Error(
+        'recipientId is required for send_direct_message reaction',
+      );
+    }
+
+    const channel = await this.discordFetch<{ id: string }>(
+      '/users/@me/channels',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          recipient_id: resolvedRecipient,
+        }),
+      },
+    );
+
+    await this.createMessage(channel.id, {
+      content: renderedContent,
+    });
   }
 
   private mapMessageToActivity(message: any): DiscordMessageActivity {

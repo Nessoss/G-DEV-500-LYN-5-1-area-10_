@@ -1,28 +1,37 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Github, Music, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuthUser } from "@/hooks/use-auth-user"
 import {
+  disconnectDiscordConnection,
+  disconnectGithubConnection,
+  disconnectSpotifyConnection,
   getConnections,
   startDiscordConnection,
-  startGithubConnection,
-  startSpotifyConnection
+  startSpotifyConnection,
 } from "@/lib/api"
 import type { ConnectionStatus } from "@/types/connections"
 
 type ConnectState = "idle" | "github" | "discord" | "connecting"
 
 export default function ConnectionsPage() {
+  const router = useRouter()
   const authUser = useAuthUser()
   const [connectState, setConnectState] = useState<ConnectState>("idle")
   const [error, setError] = useState<string | null>(null)
+  const [githubSuccess, setGithubSuccess] = useState<string | null>(null)
   const [discordError, setDiscordError] = useState<string | null>(null)
+  const [discordSuccess, setDiscordSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [connections, setConnections] = useState<ConnectionStatus[]>([])
+  const [spotifySuccess, setSpotifySuccess] = useState<string | null>(null)
+  const [disconnectingProvider, setDisconnectingProvider] = useState<"github" | "discord" | "spotify" | null>(null)
+  const [switchingGithubAccount, setSwitchingGithubAccount] = useState(false)
 
   const loadConnections = useCallback(async () => {
     try {
@@ -50,27 +59,34 @@ export default function ConnectionsPage() {
   }, [authUser, loadConnections])
 
   useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        return
-      }
+    const allowedOrigins = new Set<string>()
+    allowedOrigins.add(window.location.origin)
+    const redirectOrigin = process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI
+      ? (() => {
+          try {
+            return new URL(process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI!).origin
+          } catch {
+            return null
+          }
+        })()
+      : null
+    if (redirectOrigin) {
+      allowedOrigins.add(redirectOrigin)
+    }
 
-      if (event.data?.type === "github-connection:completed") {
-        void loadConnections()
-        if (event.data.success) {
-          setError(null)
-        } else if (event.data.error) {
-          setError(event.data.error)
-        }
-        setConnectState("idle")
+    const handler = (event: MessageEvent) => {
+      if (event.origin && !allowedOrigins.has(event.origin)) {
+        return
       }
 
       if (event.data?.type === "discord-connection:completed") {
         void loadConnections()
         if (event.data.success) {
           setDiscordError(null)
+          setDiscordSuccess("Compte Discord connecté avec succès.")
         } else if (event.data.error) {
           setDiscordError(event.data.error)
+          setDiscordSuccess(null)
         }
         setConnectState("idle")
       }
@@ -82,37 +98,69 @@ export default function ConnectionsPage() {
     }
   }, [loadConnections])
 
-  // Handle Spotify callback parameters
+  // Handle callback query parameters (Spotify + GitHub fallback)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const success = urlParams.get('success')
-    const error = urlParams.get('error')
-    
-    if (success === 'spotify_connected') {
+    const url = new URL(window.location.href)
+    const success = url.searchParams.get("success")
+    const connected = url.searchParams.get("connected")
+    const error = url.searchParams.get("error")
+    let shouldUpdateUrl = false
+
+    if (success === "spotify_connected") {
       setError(null)
+      setSpotifySuccess("Compte Spotify connecté avec succès.")
       void loadConnections()
-      // Clear URL params
-      window.history.replaceState({}, document.title, window.location.pathname)
-    } else if (error) {
-      let errorMessage = "Erreur lors de la connexion à Spotify"
-      switch (error) {
-        case 'spotify_auth_failed':
-          errorMessage = "L'autorisation Spotify a échoué"
-          break
-        case 'connection_failed':
-          errorMessage = "Impossible de se connecter à Spotify"
-          break
-        case 'not_authenticated':
-          errorMessage = "Vous devez être connecté pour lier Spotify"
-          break
-        default:
-          errorMessage = `Erreur Spotify: ${error}`
-      }
-      setError(errorMessage)
-      // Clear URL params
-      window.history.replaceState({}, document.title, window.location.pathname)
+      url.searchParams.delete("success")
+      shouldUpdateUrl = true
     }
-    
+
+    if (connected === "github") {
+      setError(null)
+      setGithubSuccess("Compte GitHub connecté avec succès.")
+      void loadConnections()
+      url.searchParams.delete("connected")
+      shouldUpdateUrl = true
+    }
+
+    if (error) {
+      if (error.startsWith("github:")) {
+        const [, reason = "server_error"] = error.split(":")
+        const message =
+          reason === "already_linked"
+            ? "Ce compte GitHub est déjà associé à un autre utilisateur."
+            : "La connexion GitHub a échoué. Veuillez réessayer."
+        setGithubSuccess(null)
+        setError(message)
+        url.searchParams.delete("error")
+        shouldUpdateUrl = true
+      } else {
+        let errorMessage = "Erreur lors de la connexion à Spotify"
+        switch (error) {
+          case "spotify_auth_failed":
+            errorMessage = "L'autorisation Spotify a échoué"
+            break
+          case "connection_failed":
+            errorMessage = "Impossible de se connecter à Spotify"
+            break
+          case "not_authenticated":
+            errorMessage = "Vous devez être connecté pour lier Spotify"
+            break
+          default:
+            errorMessage = `Erreur Spotify: ${error}`
+        }
+        setSpotifySuccess(null)
+        setError(errorMessage)
+        url.searchParams.delete("error")
+        shouldUpdateUrl = true
+      }
+    }
+
+    if (shouldUpdateUrl) {
+      const newSearch = url.searchParams.toString()
+      const newUrl = `${url.pathname}${newSearch ? `?${newSearch}` : ""}`
+      window.history.replaceState({}, document.title, newUrl)
+    }
+
     setConnectState("idle")
   }, [loadConnections])
 
@@ -133,40 +181,53 @@ export default function ConnectionsPage() {
     [connections]
   )
 
-  const handleGithubConnect = async () => {
+  const isGithubConnected = githubStatus?.connected ?? false
+  const githubConnectedAt = githubStatus?.connectedAt ?? null
+  const isDiscordConnected = discordStatus?.connected ?? false
+  const discordConnectedAt = discordStatus?.connectedAt ?? null
+
+  const handleGithubConnect = async (options: { forceLogin?: boolean } = {}) => {
     setError(null)
-    setConnectState("github")
+    setGithubSuccess(null)
+    let shouldLaunchFlow = true
+    let shouldForceLogin = options.forceLogin
 
-    try {
-      const { authorizeUrl, state } = await startGithubConnection()
-
+    if (isGithubConnected) {
+      setSwitchingGithubAccount(true)
       try {
-        localStorage.setItem("github_oauth_state", state)
-      } catch {
-        // Ignore storage errors (private mode, etc.)
+        await disconnectGithubConnection()
+        await loadConnections()
+        setGithubSuccess("Ancien compte GitHub déconnecté. Choisissez celui à associer.")
+        shouldForceLogin = true
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Impossible de préparer la connexion GitHub."
+        setError(message)
+        shouldLaunchFlow = false
+      } finally {
+        setSwitchingGithubAccount(false)
       }
-
-      const popup = window.open(
-        authorizeUrl,
-        "github-oauth",
-        "width=600,height=720,noopener,noreferrer"
-      )
-
-      if (!popup) {
-        window.location.href = authorizeUrl
-      } else {
-        popup.focus()
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Une erreur inattendue est survenue."
-      setError(message)
-      setConnectState("idle")
     }
+
+    if (!shouldLaunchFlow) {
+      setConnectState("idle")
+      return
+    }
+
+    if (typeof shouldForceLogin === "undefined") {
+      shouldForceLogin = isGithubConnected
+    }
+
+    setConnectState("github")
+    const query = shouldForceLogin ? "?forceLogin=1" : ""
+    router.push(`/connections/github/authorize${query}`)
   }
 
   const handleSpotifyConnect = () => {
     setError(null)
+    setSpotifySuccess(null)
     setConnectState("connecting")
     
     try {
@@ -181,6 +242,7 @@ export default function ConnectionsPage() {
   
   const handleDiscordConnect = async () => {
     setDiscordError(null)
+    setDiscordSuccess(null)
     setConnectState("discord")
 
     try {
@@ -211,10 +273,56 @@ export default function ConnectionsPage() {
     }
   }
 
-  const isGithubConnected = githubStatus?.connected ?? false
-  const isDiscordConnected = discordStatus?.connected ?? false
-  const githubConnectedAt = githubStatus?.connectedAt ?? null
-  const discordConnectedAt = discordStatus?.connectedAt ?? null
+  const handleGithubDisconnect = async () => {
+    setError(null)
+    setGithubSuccess(null)
+    setDisconnectingProvider("github")
+    try {
+      await disconnectGithubConnection()
+      await loadConnections()
+      setGithubSuccess("Compte GitHub déconnecté.")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Impossible de déconnecter GitHub."
+      setError(message)
+    } finally {
+      setDisconnectingProvider(null)
+    }
+  }
+
+  const handleDiscordDisconnect = async () => {
+    setDiscordError(null)
+    setDiscordSuccess(null)
+    setDisconnectingProvider("discord")
+    try {
+      await disconnectDiscordConnection()
+      await loadConnections()
+      setDiscordSuccess("Compte Discord déconnecté.")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Impossible de déconnecter Discord."
+      setDiscordError(message)
+    } finally {
+      setDisconnectingProvider(null)
+    }
+  }
+
+  const handleSpotifyDisconnect = async () => {
+    setError(null)
+    setSpotifySuccess(null)
+    setDisconnectingProvider("spotify")
+    try {
+      await disconnectSpotifyConnection()
+      await loadConnections()
+      setSpotifySuccess("Compte Spotify déconnecté.")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Impossible de déconnecter Spotify."
+      setError(message)
+    } finally {
+      setDisconnectingProvider(null)
+    }
+  }
 
   if (!authUser) {
     return (
@@ -299,6 +407,11 @@ export default function ConnectionsPage() {
                   {error}
                 </div>
               )}
+              {githubSuccess && (
+                <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500">
+                  {githubSuccess}
+                </div>
+              )}
             </CardContent>
 
             <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -311,19 +424,38 @@ export default function ConnectionsPage() {
                     : "Compte GitHub connecté."
                   : "Aucun compte GitHub lié."}
               </div>
-              <Button
-                size="lg"
-                className="gap-2"
-                onClick={handleGithubConnect}
-                disabled={connectState === "github"}
-              >
-                <Github className="h-4 w-4" />
-                {connectState === "github"
-                  ? "Ouverture de la connexion..."
-                  : isGithubConnected
-                  ? "Reconnecter GitHub"
-                  : "Connecter GitHub"}
-              </Button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                {isGithubConnected && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleGithubDisconnect}
+                    disabled={disconnectingProvider === "github"}
+                  >
+                    {disconnectingProvider === "github" ? "Déconnexion..." : "Déconnecter"}
+                  </Button>
+                )}
+                <Button
+                  size="lg"
+                  className="gap-2"
+                  onClick={() => void handleGithubConnect()}
+                  disabled={
+                    connectState === "github" ||
+                    disconnectingProvider === "github" ||
+                    switchingGithubAccount
+                  }
+                >
+                  <Github className="h-4 w-4" />
+                  {connectState === "github"
+                    ? "Ouverture de la connexion..."
+                    : switchingGithubAccount
+                    ? "Préparation..."
+                    : isGithubConnected
+                    ? "Changer de compte"
+                    : "Connecter GitHub"}
+                </Button>
+              </div>
             </CardFooter>
           </Card>
             
@@ -367,6 +499,11 @@ export default function ConnectionsPage() {
                   {discordError}
                 </div>
               )}
+              {discordSuccess && (
+                <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500">
+                  {discordSuccess}
+                </div>
+              )}
             </CardContent>
 
             <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -379,20 +516,33 @@ export default function ConnectionsPage() {
                     : "Compte Discord connecté."
                   : "Bot Discord non autorisé."}
               </div>
-              <Button
-                size="lg"
-                variant={isDiscordConnected ? "outline" : "default"}
-                className="gap-2"
-                onClick={handleDiscordConnect}
-                disabled={connectState === "discord"}
-              >
-                <MessageSquare className="h-4 w-4" />
-                {connectState === "discord"
-                  ? "Ouverture de la connexion..."
-                  : isDiscordConnected
-                  ? "Reconnecter Discord"
-                  : "Connecter Discord"}
-              </Button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                {isDiscordConnected && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleDiscordDisconnect}
+                    disabled={disconnectingProvider === "discord"}
+                  >
+                    {disconnectingProvider === "discord" ? "Déconnexion..." : "Déconnecter"}
+                  </Button>
+                )}
+                <Button
+                  size="lg"
+                  variant={isDiscordConnected ? "outline" : "default"}
+                  className="gap-2"
+                  onClick={handleDiscordConnect}
+                  disabled={connectState === "discord" || disconnectingProvider === "discord"}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {connectState === "discord"
+                    ? "Ouverture de la connexion..."
+                    : isDiscordConnected
+                    ? "Reconnecter Discord"
+                    : "Connecter Discord"}
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         
@@ -433,6 +583,11 @@ export default function ConnectionsPage() {
                   {error}
                 </div>
               )}
+              {spotifySuccess && (
+                <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500">
+                  {spotifySuccess}
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-foreground/60">
@@ -444,19 +599,36 @@ export default function ConnectionsPage() {
                     : "Compte Spotify connecté."
                   : "Aucun compte Spotify lié."}
               </div>
-              <Button
-                size="lg"
-                className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                onClick={handleSpotifyConnect}
-                disabled={connectState === "connecting" || isSpotifyConnected}
-              >
-                <Music className="h-4 w-4" />
-                {connectState === "connecting"
-                  ? "Ouverture de la connexion..."
-                  : isSpotifyConnected
-                  ? "Spotify Connecté"
-                  : "Connecter Spotify"}
-              </Button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                {isSpotifyConnected && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleSpotifyDisconnect}
+                    disabled={disconnectingProvider === "spotify"}
+                  >
+                    {disconnectingProvider === "spotify" ? "Déconnexion..." : "Déconnecter"}
+                  </Button>
+                )}
+                <Button
+                  size="lg"
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={handleSpotifyConnect}
+                  disabled={
+                    connectState === "connecting" ||
+                    isSpotifyConnected ||
+                    disconnectingProvider === "spotify"
+                  }
+                >
+                  <Music className="h-4 w-4" />
+                  {connectState === "connecting"
+                    ? "Ouverture de la connexion..."
+                    : isSpotifyConnected
+                    ? "Spotify Connecté"
+                    : "Connecter Spotify"}
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         </div>

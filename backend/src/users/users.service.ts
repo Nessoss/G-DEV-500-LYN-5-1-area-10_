@@ -73,10 +73,17 @@ export class UsersService {
       update: {
         providerUserId: data.providerUserId,
         accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        expiresAt: data.expiresAt,
+        refreshToken: data.refreshToken ?? null,
+        expiresAt: data.expiresAt ?? null,
       },
-      create: data,
+      create: {
+        userId: data.userId,
+        provider: data.provider,
+        providerUserId: data.providerUserId,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken ?? null,
+        expiresAt: data.expiresAt ?? null,
+      },
     });
   }
 
@@ -92,6 +99,23 @@ export class UsersService {
         userId_provider: {
           userId,
           provider,
+        },
+      },
+    });
+  }
+
+  /**
+   * Find a provider account by provider + external identifier
+   */
+  async findProviderAccountByProviderUserId(
+    provider: string,
+    providerUserId: string,
+  ): Promise<ProviderAccount | null> {
+    return this.database.providerAccount.findUnique({
+      where: {
+        provider_providerUserId: {
+          provider,
+          providerUserId,
         },
       },
     });

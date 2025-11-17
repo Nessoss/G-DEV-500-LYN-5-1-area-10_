@@ -396,74 +396,60 @@ const serviceSeeds: ServiceSeed[] = [
         },
       },
       {
-        key: 'send_embed_message',
-        description: 'Envoyer un message enrichi (embed) dans un salon Discord',
+        key: 'create_thread',
+        description: 'Créer un fil de discussion dédié dans un salon Discord',
         configSchema: {
           type: 'object',
-          required: ['descriptionTemplate'],
+          required: ['guildId', 'channelId', 'threadNameTemplate'],
           additionalProperties: false,
           properties: {
             guildId: {
               type: 'string',
-              description: 'Identifiant de serveur Discord optionnel pour faciliter la sélection du salon',
+              description: 'Identifiant du serveur contenant le salon cible',
               format: 'discord-guild',
             },
             channelId: {
               type: 'string',
-              description: 'Identifiant du salon cible pour l’embed. Utilise le salon source si non renseigné.',
+              description: 'Identifiant du salon dans lequel ouvrir le fil',
               format: 'discord-channel',
             },
-            titleTemplate: {
+            threadNameTemplate: {
               type: 'string',
               description:
-                'Modèle de titre d’embed acceptant des variables (ex. {{activity.title}}). Optionnel.',
+                'Modèle du nom du thread (ex: "Suivi #{{activity.number}} - {{activity.title}}").',
             },
-            descriptionTemplate: {
+            starterMessageTemplate: {
               type: 'string',
               description:
-                'Modèle de description pour l’embed, avec variables. Markdown pris en charge par Discord.',
+                'Message optionnel publié automatiquement comme premier message du fil.',
             },
-            urlTemplate: {
+            autoArchiveDuration: {
               type: 'string',
-              description: 'URL optionnelle associée au titre de l’embed (variables autorisées).',
-            },
-            color: {
-              type: 'integer',
-              description: 'Code couleur décimal pour la bordure de l’embed (ex. 5814783).',
-            },
-            footerTemplate: {
-              type: 'string',
-              description: 'Modèle optionnel pour le pied de page.',
+              description:
+                'Durée avant archivage automatique (minutes). Valeurs supportées : 60, 1440, 4320, 10080.',
+              enum: ['60', '1440', '4320', '10080'],
+              default: '1440',
             },
           },
         },
       },
       {
-        key: 'add_reaction',
-        description: 'Ajouter une réaction emoji à un message',
+        key: 'send_direct_message',
+        description: 'Envoyer un message privé à un utilisateur Discord',
         configSchema: {
           type: 'object',
-          required: ['guildId', 'channelId', 'messageId', 'emoji'],
+          required: ['contentTemplate'],
           additionalProperties: false,
           properties: {
-            guildId: {
-              type: 'string',
-              description: 'Identifiant du serveur contenant le message',
-              format: 'discord-guild',
-            },
-            channelId: {
-              type: 'string',
-              description: 'Identifiant du salon contenant le message ciblé',
-              format: 'discord-channel',
-            },
-            messageId: {
-              type: 'string',
-              description: 'Identifiant du message auquel réagir',
-            },
-            emoji: {
+            recipientId: {
               type: 'string',
               description:
-                'Emoji à utiliser (unicode comme 😀 ou format personnalisé nom:id).',
+                'Identifiant du destinataire (peut utiliser des variables comme {{activity.author.id}}). Laisser vide pour cibler l’auteur côté Discord.',
+            },
+            contentTemplate: {
+              type: 'string',
+              description:
+                'Modèle du message privé envoyé (placeholders disponibles).',
             },
           },
         },

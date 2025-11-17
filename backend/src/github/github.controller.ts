@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBadRequestResponse,
@@ -13,6 +13,10 @@ import {
   GithubActionKey,
   GITHUB_SUPPORTED_ACTIONS,
 } from './github.service';
+import {
+  GithubApiError,
+  GithubTokenUnavailableError,
+} from './github-api.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   GithubPollingResponseDto,
@@ -20,6 +24,8 @@ import {
 } from './dto/github-response.dto';
 import { UnauthorizedResponseDto } from '../auth/dto/login-response.dto';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import type { Request } from 'express';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @ApiTags('github')
 @ApiBearerAuth()
@@ -56,6 +62,7 @@ export class GithubController {
   })
   @ApiUnauthorizedResponse({ type: UnauthorizedResponseDto })
   async testRepository(
+    @Req() request: Request,
     @Query('owner') owner: string,
     @Query('repo') repo: string,
     @Query('action') action?: string,
@@ -70,8 +77,29 @@ export class GithubController {
       );
     }
 
+    const user = request.user as JwtPayload;
+    const userId = parseInt(user.sub, 10);
+
     const actionKey = action as GithubActionKey | undefined;
-    const data = await this.githubService.manualFetch(owner, repo, actionKey);
+    let data;
+    try {
+      data = await this.githubService.manualFetch(
+        owner,
+        repo,
+        userId,
+        actionKey,
+      );
+    } catch (error) {
+      if (error instanceof GithubTokenUnavailableError) {
+        throw new BadRequestException(
+          'Aucun compte GitHub valide n’est associé à votre profil. Reconnectez GitHub puis réessayez.',
+        );
+      }
+      if (error instanceof GithubApiError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
 
     return {
       owner,

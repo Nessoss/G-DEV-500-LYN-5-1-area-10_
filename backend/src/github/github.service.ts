@@ -6,6 +6,11 @@ import {
   DiscordReactionContext,
   DiscordService,
 } from '../discord/discord.service';
+import {
+  GithubApiService,
+  GithubApiError,
+  GithubTokenUnavailableError,
+} from './github-api.service';
 
 export type GithubActionKey = 'new_issue'
   | 'new_pull_request'
@@ -96,12 +101,12 @@ export const GITHUB_SUPPORTED_ACTIONS: GithubActionKey[] = [
 @Injectable()
 export class GithubService {
   private readonly logger = new Logger(GithubService.name);
-  private readonly apiBaseUrl = 'https://api.github.com';
-  private readonly githubToken = process.env.GITHUB_TOKEN;
+  private readonly recentActivityThresholdMs = 10 * 60 * 1000; // 10 minutes
 
   constructor(
     private readonly database: DatabaseService,
     private readonly discordService: DiscordService,
+    private readonly githubApi: GithubApiService,
   ) {}
 
   /**
@@ -145,11 +150,12 @@ export class GithubService {
         return;
       }
 
-      const areasByRepo = new Map<
+      const areasByUserRepo = new Map<
         string,
         {
           owner: string;
           repo: string;
+          userId: number;
           actionAreas: Map<GithubActionKey, typeof areas>;
         }
       >();
@@ -169,16 +175,17 @@ export class GithubService {
           continue;
         }
 
-        const repoKey = `${config.owner}/${config.repo}`.toLowerCase();
-        if (!areasByRepo.has(repoKey)) {
-          areasByRepo.set(repoKey, {
+        const repoKey = `${area.userId}:${config.owner}/${config.repo}`.toLowerCase();
+        if (!areasByUserRepo.has(repoKey)) {
+          areasByUserRepo.set(repoKey, {
             owner: config.owner,
             repo: config.repo,
+            userId: area.userId,
             actionAreas: new Map(),
           });
         }
 
-        const entry = areasByRepo.get(repoKey)!;
+        const entry = areasByUserRepo.get(repoKey)!;
         if (!entry.actionAreas.has(actionKey)) {
           entry.actionAreas.set(actionKey, []);
         }
@@ -186,12 +193,13 @@ export class GithubService {
         entry.actionAreas.get(actionKey)!.push(area);
       }
 
-      for (const repoEntry of areasByRepo.values()) {
+      for (const repoEntry of areasByUserRepo.values()) {
         await this.processRepository(
           repoEntry.owner,
           repoEntry.repo,
           repoEntry.actionAreas,
           service.id,
+          repoEntry.userId,
         );
       }
 
@@ -207,19 +215,25 @@ export class GithubService {
   async manualFetch(
     owner: string,
     repo: string,
+    userId: number,
     actionKey?: GithubActionKey,
   ): Promise<Record<string, GithubActivity[]>> {
     if (actionKey) {
-      const activities = await this.fetchActivities(owner, repo, actionKey);
+      const activities = await this.fetchActivities(
+        owner,
+        repo,
+        actionKey,
+        userId,
+      );
       return {
         [actionKey]: activities,
       };
     }
 
     const [issues, pullRequests, releases] = await Promise.all([
-      this.fetchActivities(owner, repo, 'new_issue'),
-      this.fetchActivities(owner, repo, 'new_pull_request'),
-      this.fetchActivities(owner, repo, 'new_release'),
+      this.fetchActivities(owner, repo, 'new_issue', userId),
+      this.fetchActivities(owner, repo, 'new_pull_request', userId),
+      this.fetchActivities(owner, repo, 'new_release', userId),
     ]);
 
     return {
@@ -254,8 +268,11 @@ export class GithubService {
     repo: string,
     actionAreas: Map<GithubActionKey, any[]>,
     serviceId: number,
+    userId: number,
   ): Promise<void> {
-    this.logger.debug(`Processing GitHub repository ${owner}/${repo}`);
+    this.logger.debug(
+      `Processing GitHub repository ${owner}/${repo} for user ${userId}`,
+    );
 
     const cache = new Map<GithubActionKey, GithubActivity[]>();
 
@@ -263,14 +280,25 @@ export class GithubService {
       actionKey: GithubActionKey,
     ): Promise<GithubActivity[]> => {
       if (!cache.has(actionKey)) {
-        const activities = await this.fetchActivities(owner, repo, actionKey);
+        const activities = await this.fetchActivities(
+          owner,
+          repo,
+          actionKey,
+          userId,
+        );
         cache.set(actionKey, activities);
       }
       return cache.get(actionKey)!;
     };
 
     for (const [actionKey, areas] of actionAreas.entries()) {
-      const activities = await getActivities(actionKey);
+      let activities: GithubActivity[];
+      try {
+        activities = await getActivities(actionKey);
+      } catch (error) {
+        await this.handleGithubFetchError(error, areas, owner, repo);
+        continue;
+      }
 
       for (const activity of activities) {
         const existingEvent = await this.database.webhookEvent.findUnique({
@@ -286,6 +314,8 @@ export class GithubService {
           continue;
         }
 
+        const isRecent = this.isActivityRecent(activity);
+
         await this.database.webhookEvent.create({
           data: {
             serviceId,
@@ -293,6 +323,13 @@ export class GithubService {
             payload: activity as any,
           },
         });
+
+        if (!isRecent) {
+          this.logger.debug(
+            `Skipping ${activity.type} ${activity.dedupKey} created at ${activity.createdAt.toISOString()} (older than ${this.recentActivityThresholdMs / 60000} minutes)`,
+          );
+          continue;
+        }
 
         await this.processActivityForAreas(areas, activity, serviceId);
       }
@@ -311,6 +348,34 @@ export class GithubService {
         return true;
       default:
         return false;
+    }
+  }
+
+  private async handleGithubFetchError(
+    error: unknown,
+    areas: any[],
+    owner: string,
+    repo: string,
+  ): Promise<void> {
+    const message =
+      error instanceof GithubTokenUnavailableError || error instanceof GithubApiError
+        ? error.message
+        : error instanceof Error
+        ? error.message
+        : 'Erreur inconnue lors de la récupération GitHub.';
+
+    this.logger.error(
+      `Failed to fetch GitHub data for ${owner}/${repo}: ${message}`,
+    );
+
+    for (const area of areas) {
+      await this.database.areaLog.create({
+        data: {
+          areaId: area.id,
+          status: AreaLogStatus.failure,
+          error: message,
+        },
+      });
     }
   }
 
@@ -586,18 +651,29 @@ export class GithubService {
     return `${value.slice(0, maxLength - 3)}...`;
   }
 
+  private isActivityRecent(activity: GithubActivity): boolean {
+    if (!activity.createdAt) {
+      return true;
+    }
+
+    const now = Date.now();
+    const createdAt = activity.createdAt.getTime();
+    return now - createdAt <= this.recentActivityThresholdMs;
+  }
+
   private async fetchActivities(
     owner: string,
     repo: string,
     actionKey: GithubActionKey,
+    userId: number,
   ): Promise<GithubActivity[]> {
     switch (actionKey) {
       case 'new_issue':
-        return this.fetchIssues(owner, repo);
+        return this.fetchIssues(owner, repo, userId);
       case 'new_pull_request':
-        return this.fetchPullRequests(owner, repo);
+        return this.fetchPullRequests(owner, repo, userId);
       case 'new_release':
-        return this.fetchReleases(owner, repo);
+        return this.fetchReleases(owner, repo, userId);
       default:
         return [];
     }
@@ -606,15 +682,16 @@ export class GithubService {
   private async fetchIssues(
     owner: string,
     repo: string,
+    userId: number,
   ): Promise<GithubActivity[]> {
-    const url = `${this.apiBaseUrl}/repos/${owner}/${repo}/issues?state=open&sort=created&direction=desc&per_page=20`;
-    const items = await this.fetchFromGithub<GithubIssue[]>(url, 'issues list');
+    const url = `/repos/${owner}/${repo}/issues?state=open&sort=created&direction=desc&per_page=20`;
+    const items = await this.githubApi.request<GithubIssue[]>({
+      userId,
+      url,
+      context: `issues list for ${owner}/${repo}`,
+    });
 
-    if (!items) {
-      return [];
-    }
-
-    return items
+    return (items ?? [])
       .filter((item) => !item.pull_request)
       .map((item) => ({
         dedupKey: `github:${owner}/${repo}:issue:${item.id}`,
@@ -639,18 +716,16 @@ export class GithubService {
   private async fetchPullRequests(
     owner: string,
     repo: string,
+    userId: number,
   ): Promise<GithubActivity[]> {
-    const url = `${this.apiBaseUrl}/repos/${owner}/${repo}/pulls?state=open&sort=created&direction=desc&per_page=20`;
-    const items = await this.fetchFromGithub<GithubPullRequest[]>(
+    const url = `/repos/${owner}/${repo}/pulls?state=open&sort=created&direction=desc&per_page=20`;
+    const items = await this.githubApi.request<GithubPullRequest[]>({
+      userId,
       url,
-      'pull requests list',
-    );
+      context: `pull request list for ${owner}/${repo}`,
+    });
 
-    if (!items) {
-      return [];
-    }
-
-    return items.map((item) => ({
+    return (items ?? []).map((item) => ({
       dedupKey: `github:${owner}/${repo}:pull:${item.id}`,
       actionKey: 'new_pull_request' as const,
       type: 'pull_request' as const,
@@ -674,18 +749,16 @@ export class GithubService {
   private async fetchReleases(
     owner: string,
     repo: string,
+    userId: number,
   ): Promise<GithubActivity[]> {
-    const url = `${this.apiBaseUrl}/repos/${owner}/${repo}/releases?per_page=20`;
-    const items = await this.fetchFromGithub<GithubRelease[]>(
+    const url = `/repos/${owner}/${repo}/releases?per_page=20`;
+    const items = await this.githubApi.request<GithubRelease[]>({
+      userId,
       url,
-      'releases list',
-    );
+      context: `releases list for ${owner}/${repo}`,
+    });
 
-    if (!items) {
-      return [];
-    }
-
-    return items.map((item) => ({
+    return (items ?? []).map((item) => ({
       dedupKey: `github:${owner}/${repo}:release:${item.id}`,
       actionKey: 'new_release' as const,
       type: 'release' as const,
@@ -707,37 +780,4 @@ export class GithubService {
     }));
   }
 
-  private async fetchFromGithub<T>(
-    url: string,
-    context: string,
-  ): Promise<T | null> {
-    try {
-      const headers: Record<string, string> = {
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'area-backend',
-      };
-
-      if (this.githubToken) {
-        headers.Authorization = `Bearer ${this.githubToken}`;
-      }
-
-      this.logger.debug(`GitHub request (${context}): ${url}`);
-
-      const response = await fetch(url, { headers });
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error(
-          `GitHub API error for ${context}: ${response.status} ${response.statusText} - ${errorText}`,
-        );
-        return null;
-      }
-
-      return (await response.json()) as T;
-    } catch (error) {
-      this.logger.error(
-        `GitHub API request failed for ${context}: ${error.message}`,
-      );
-      return null;
-    }
-  }
 }
