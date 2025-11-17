@@ -18,6 +18,7 @@ export default function LinkAreaToSlack({ areaId }: Props) {
         credentials: 'include',
         body: JSON.stringify({ channelId, inviteUserIds: inviteUsers ? inviteUsers.split(',').map(s => s.trim()) : [] }),
       });
+      
       if (!res.ok) throw new Error('HTTP ' + res.status);
       setStatus('success');
     } catch (err) {
