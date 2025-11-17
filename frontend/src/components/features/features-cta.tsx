@@ -13,36 +13,36 @@ export function FeaturesCTA() {
       <div className="max-w-4xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-mint/10 border border-mint/20 mb-6">
           <Sparkles className="w-4 h-4 text-mint" />
-          <span className="text-sm font-medium text-foreground">Ready to transform your workflow?</span>
+          <span className="text-sm font-medium text-foreground">Prêt à transformer votre flux de travail ?</span>
         </div>
 
         <h2 className="text-4xl md:text-5xl font-bold mb-6">
-          <span className="text-foreground">Start automating </span>
+          <span className="text-foreground">Commencez à automatiser </span>
           <span className="bg-gradient-to-r from-light-blue via-mint to-soft-yellow bg-clip-text text-transparent">
-            today
+            dès aujourd&apos;hui
           </span>
         </h2>
 
         <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
-          Join thousands of teams who already automate their processes and reclaim hours every week.
+          Rejoignez des milliers d&apos;équipes qui automatisent déjà leurs processus et récupèrent des heures chaque semaine.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/signup">
             <Button size="lg" className="gap-2 bg-navy hover:bg-navy-dark text-white">
-              Try it free
+              Essayer gratuitement
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
           <Link href="/contact">
             <Button size="lg" variant="outline" className="gap-2 bg-transparent">
-              Talk to an expert
+              Parler à un expert
             </Button>
           </Link>
         </div>
 
         <p className="text-sm text-muted-foreground mt-6">
-          No credit card required • Go live in 2 minutes • Support available in English & French
+          Aucune carte bancaire requise • En ligne en 2 minutes • Support disponible en anglais et français
         </p>
       </div>
     </section>

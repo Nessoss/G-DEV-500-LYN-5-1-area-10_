@@ -4,14 +4,14 @@ import { Check, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 
 const features = [
-  { name: "Intuitive interface", area: true, zapier: false, ifttt: false },
-  { name: "Generous free plan", area: true, zapier: false, ifttt: false },
-  { name: "Advanced conditional logic", area: true, zapier: true, ifttt: false },
-  { name: "French-language support", area: true, zapier: false, ifttt: false },
-  { name: "Unlimited webhooks", area: true, zapier: false, ifttt: false },
-  { name: "EU hosting", area: true, zapier: false, ifttt: false },
-  { name: "Full API access", area: true, zapier: true, ifttt: false },
-  { name: "Team collaboration", area: true, zapier: true, ifttt: false },
+  { name: "Interface intuitive", area: true, zapier: false, ifttt: false },
+  { name: "Plan gratuit généreux", area: true, zapier: false, ifttt: false },
+  { name: "Logique conditionnelle avancée", area: true, zapier: true, ifttt: false },
+  { name: "Support en français", area: true, zapier: false, ifttt: false },
+  { name: "Webhooks illimités", area: true, zapier: false, ifttt: false },
+  { name: "Hébergement UE", area: true, zapier: false, ifttt: false },
+  { name: "Accès API complet", area: true, zapier: true, ifttt: false },
+  { name: "Collaboration d'équipe", area: true, zapier: true, ifttt: false },
 ]
 
 export function ComparisonSection() {
@@ -21,13 +21,13 @@ export function ComparisonSection() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-foreground">Why choose </span>
+              <span className="text-foreground">Pourquoi choisir </span>
               <span className="bg-gradient-to-r from-light-blue to-mint bg-clip-text text-transparent">
-                our platform?
+                notre plateforme ?
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A candid comparison with the market leaders
+              Une comparaison franche avec les leaders du marché
             </p>
           </div>
 
@@ -36,7 +36,7 @@ export function ComparisonSection() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2">
-                    <th className="text-left p-6 font-bold text-foreground">Feature</th>
+                    <th className="text-left p-6 font-bold text-foreground">Fonctionnalité</th>
                     <th className="p-6 text-center">
                       <div className="inline-flex px-4 py-2 rounded-full bg-gradient-to-r from-light-blue to-mint text-white font-bold">
                         AREA

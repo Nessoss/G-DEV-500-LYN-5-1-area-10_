@@ -45,7 +45,7 @@ export default function DocsPage() {
             </Button>
             <Button size="lg" variant="outline" className="border-navy text-navy hover:bg-navy/5 dark:border-light-blue dark:text-light-blue dark:hover:bg-light-blue/10">
               <Code className="mr-2 h-4 w-4" />
-              API Documentation
+              Documentation API
             </Button>
           </div>
         </div>

@@ -7,20 +7,20 @@ export function WorkflowVisual() {
   const steps = [
     {
       icon: "🎯",
-      title: "Trigger",
-      description: "When something happens",
+      title: "Déclencheur",
+      description: "Quand quelque chose se produit",
       color: "light-blue",
     },
     {
       icon: "⚡",
-      title: "Process",
-      description: "Transform and filter data",
+      title: "Traitement",
+      description: "Transformer et filtrer les données",
       color: "mint",
     },
     {
       icon: "🚀",
       title: "Action",
-      description: "Do something automatically",
+      description: "Faire quelque chose automatiquement",
       color: "soft-yellow",
     },
   ]
@@ -31,14 +31,14 @@ export function WorkflowVisual() {
         <div className="mb-16 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-mint/20 px-4 py-1.5 text-sm font-semibold text-navy dark:bg-mint/30 dark:text-white">
             <Zap className="h-4 w-4" />
-            Visual Workflow Builder
+            Créateur de Workflow Visuel
           </div>
           <h2 className="mb-4 text-balance text-4xl font-bold text-navy md:text-5xl dark:text-white">
-            Build powerful automations in minutes
+            Créez de puissantes automatisations en quelques minutes
           </h2>
           <p className="mx-auto max-w-2xl text-pretty text-lg text-muted-foreground">
-            No coding required. Our intuitive visual builder makes it easy to create complex workflows that connect all
-            your favorite apps.
+            Aucun codage requis. Notre créateur visuel intuitif facilite la création de workflows complexes qui connectent toutes
+            vos applications favorites.
           </p>
         </div>
 
@@ -69,8 +69,8 @@ export function WorkflowVisual() {
           <div className="mt-12 rounded-2xl border-2 border-border bg-card p-8 shadow-sm">
             <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
               <div className="flex-1">
-                <h3 className="mb-2 text-2xl font-bold text-navy dark:text-white">Ready to automate your workflow?</h3>
-                <p className="text-muted-foreground">Join thousands of teams already automating with AREA51</p>
+                <h3 className="mb-2 text-2xl font-bold text-navy dark:text-white">Prêt à automatiser votre workflow ?</h3>
+                <p className="text-muted-foreground">Rejoignez des milliers d&apos;équipes qui automatisent déjà avec AREA</p>
               </div>
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-light-blue/10 dark:bg-light-blue/20">

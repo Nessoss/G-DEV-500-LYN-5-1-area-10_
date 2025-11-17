@@ -8,54 +8,54 @@ const specs = [
     icon: Zap,
     title: "Performance",
     items: [
-      { label: "Execution time", value: "<1 second" },
-      { label: "Guaranteed uptime", value: "99.9%" },
-      { label: "Requests per second", value: "10,000+" },
+      { label: "Temps d'exécution", value: "<1 seconde" },
+      { label: "Disponibilité garantie", value: "99.9%" },
+      { label: "Requêtes par seconde", value: "10 000+" },
     ],
   },
   {
     icon: Server,
     title: "Infrastructure",
     items: [
-      { label: "Regions", value: "Multi-region" },
-      { label: "Auto-scaling", value: "Automatic" },
-      { label: "CDN", value: "Global" },
+      { label: "Régions", value: "Multi-régions" },
+      { label: "Auto-scalabilité", value: "Automatique" },
+      { label: "CDN", value: "Mondial" },
     ],
   },
   {
     icon: Lock,
-    title: "Security",
+    title: "Sécurité",
     items: [
-      { label: "Encryption", value: "AES-256" },
-      { label: "Compliance", value: "GDPR, ISO 27001" },
-      { label: "Authentication", value: "OAuth 2.0" },
+      { label: "Chiffrement", value: "AES-256" },
+      { label: "Conformité", value: "RGPD, ISO 27001" },
+      { label: "Authentification", value: "OAuth 2.0" },
     ],
   },
   {
     icon: Globe2,
-    title: "Availability",
+    title: "Disponibilité",
     items: [
-      { label: "Data centers", value: "EU, US, APAC" },
-      { label: "Support", value: "24/7" },
-      { label: "Languages", value: "15+" },
+      { label: "Centres de données", value: "UE, États-Unis, APAC" },
+      { label: "Support", value: "24h/24 7j/7" },
+      { label: "Langues", value: "15+" },
     ],
   },
   {
     icon: Clock,
-    title: "Usage limits",
+    title: "Limites d&apos;utilisation",
     items: [
-      { label: "Workflows", value: "Unlimited" },
-      { label: "Runs per month", value: "100,000+" },
-      { label: "Integrations", value: "500+" },
+      { label: "Workflows", value: "Illimités" },
+      { label: "Exécutions par mois", value: "100 000+" },
+      { label: "Intégrations", value: "500+" },
     ],
   },
   {
     icon: TrendingUp,
-    title: "Monitoring",
+    title: "Surveillance",
     items: [
-      { label: "Real-time logs", value: "Yes" },
-      { label: "Analytics", value: "Advanced" },
-      { label: "Alerts", value: "Customizable" },
+      { label: "Logs temps réel", value: "Oui" },
+      { label: "Analyses", value: "Avancées" },
+      { label: "Alertes", value: "Personnalisables" },
     ],
   },
 ]
@@ -67,13 +67,13 @@ export function TechnicalSpecs() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-foreground">Technical </span>
+              <span className="text-foreground">Spécifications </span>
               <span className="bg-gradient-to-r from-soft-yellow to-light-blue bg-clip-text text-transparent">
-                specifications
+                techniques
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A resilient infrastructure built for mission-critical automations
+              Une infrastructure résiliente conçue pour les automatisations critiques
             </p>
           </div>
 
